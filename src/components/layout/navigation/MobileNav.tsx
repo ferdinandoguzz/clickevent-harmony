@@ -35,21 +35,24 @@ const MobileNav: React.FC = () => {
           <Separator className="bg-sidebar-border" />
           <nav className="flex-1 overflow-auto p-4">
             <ul className="flex flex-col gap-1">
-              {navItems.filter(item => !item.roles || (role && item.roles.includes(role))).map((item) => (
-                <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    className={({ isActive }) => cn(
-                      'flex items-center py-2 px-3 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200',
-                      isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                    )}
-                    onClick={() => setOpen(false)}
-                  >
-                    {item.icon}
-                    <span className="ml-2">{item.label}</span>
-                  </NavLink>
-                </li>
-              ))}
+              {navItems.filter(item => !item.roles || (role && item.roles.includes(role))).map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.to}>
+                    <NavLink
+                      to={item.to}
+                      className={({ isActive }) => cn(
+                        'flex items-center py-2 px-3 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200',
+                        isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                      )}
+                      onClick={() => setOpen(false)}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="ml-2">{item.label}</span>
+                    </NavLink>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
         </div>
