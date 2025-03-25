@@ -6,10 +6,12 @@ import { Loader } from 'lucide-react';
 
 interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
+  children?: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  allowedRoles = ['superadmin', 'admin', 'staff']
+  allowedRoles = ['superadmin', 'admin', 'staff'],
+  children
 }) => {
   const { isAuthenticated, isLoading, role } = useAuth();
   const location = useLocation();
@@ -33,7 +35,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check role permissions
   if (role && allowedRoles.includes(role)) {
-    return <Outlet />;
+    return children ? <>{children}</> : <Outlet />;
   }
 
   // Redirect to unauthorized page if role is not allowed

@@ -21,6 +21,7 @@ import CheckIn from "@/pages/CheckIn";
 import Analytics from "@/pages/Analytics";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
+import StaffManagement from "@/pages/StaffManagement";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,13 @@ const App = () => (
                 <Route path="/events/:eventId" element={<EventDetail />} />
                 <Route path="/events/:eventId/vouchers" element={<EventVouchers />} />
                 <Route path="/analytics" element={<Analytics />} />
+                
+                {/* SuperAdmin only routes */}
+                <Route path="/staff-management" element={
+                  <ProtectedRoute allowedRoles={['superadmin']} />
+                }>
+                  <Route index element={<StaffManagement />} />
+                </Route>
                 
                 {/* All roles routes */}
                 <Route path="/check-in" element={<CheckIn />} />

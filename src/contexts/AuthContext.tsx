@@ -9,6 +9,7 @@ interface User {
   name: string;
   email: string;
   role: UserRole;
+  clubId?: string; // Club associato all'utente staff
 }
 
 interface AuthContextType {
@@ -18,6 +19,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   role: UserRole;
+  createUser: (name: string, email: string, password: string, role: UserRole, clubId?: string) => Promise<User>;
+  getAllUsers: () => User[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +40,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     // Check for saved auth in localStorage
@@ -49,42 +53,90 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.removeItem('clickevent_user');
       }
     }
+    
+    // Carica gli utenti salvati
+    const savedUsers = localStorage.getItem('clickevent_users');
+    if (savedUsers) {
+      try {
+        setUsers(JSON.parse(savedUsers));
+      } catch (e) {
+        console.error('Error parsing saved users data', e);
+        localStorage.removeItem('clickevent_users');
+      }
+    } else {
+      // Inizializza con alcuni utenti di default se non ce ne sono
+      const defaultUsers = [
+        {
+          id: 'superadmin-1',
+          name: 'Super Admin',
+          email: 'superadmin@clickevent.com',
+          role: 'superadmin' as UserRole
+        },
+        {
+          id: 'admin-1',
+          name: 'Admin',
+          email: 'admin@clickevent.com',
+          role: 'admin' as UserRole
+        },
+        {
+          id: 'staff-1',
+          name: 'Staff',
+          email: 'staff@clickevent.com',
+          role: 'staff' as UserRole
+        }
+      ];
+      setUsers(defaultUsers);
+      localStorage.setItem('clickevent_users', JSON.stringify(defaultUsers));
+    }
+    
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // This is a mock authentication for the prototype
-      if (email && password) {
-        // Simulate role based on email for demo purposes
-        let role: UserRole = null;
-        
-        if (email.includes('superadmin')) {
-          role = 'superadmin';
-        } else if (email.includes('admin')) {
-          role = 'admin';
-        } else if (email.includes('staff')) {
-          role = 'staff';
-        } else {
-          throw new Error('Invalid user role');
-        }
-        
-        const newUser: User = {
-          id: `user-${Date.now()}`,
-          name: email.split('@')[0],
-          email,
-          role
-        };
-        
-        setUser(newUser);
-        localStorage.setItem('clickevent_user', JSON.stringify(newUser));
+      // Verifica se l'utente esiste nella lista degli utenti
+      const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      
+      if (foundUser && password) {
+        setUser(foundUser);
+        localStorage.setItem('clickevent_user', JSON.stringify(foundUser));
         toast({
           title: 'Successfully logged in',
-          description: `Welcome back, ${newUser.name}!`
+          description: `Welcome back, ${foundUser.name}!`
         });
       } else {
-        throw new Error('Invalid credentials');
+        // Fallback al comportamento precedente per demo
+        if (email && password) {
+          // Simulate role based on email for demo purposes
+          let role: UserRole = null;
+          
+          if (email.includes('superadmin')) {
+            role = 'superadmin';
+          } else if (email.includes('admin')) {
+            role = 'admin';
+          } else if (email.includes('staff')) {
+            role = 'staff';
+          } else {
+            throw new Error('Invalid user role');
+          }
+          
+          const newUser: User = {
+            id: `user-${Date.now()}`,
+            name: email.split('@')[0],
+            email,
+            role
+          };
+          
+          setUser(newUser);
+          localStorage.setItem('clickevent_user', JSON.stringify(newUser));
+          toast({
+            title: 'Successfully logged in',
+            description: `Welcome back, ${newUser.name}!`
+          });
+        } else {
+          throw new Error('Invalid credentials');
+        }
       }
     } catch (error) {
       toast({
@@ -107,6 +159,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
   };
 
+  const createUser = async (name: string, email: string, password: string, role: UserRole, clubId?: string): Promise<User> => {
+    // In un'applicazione reale, qui invieremmo una richiesta al backend
+    // Per ora, simuliamo la creazione dell'utente
+    const newUser: User = {
+      id: `user-${Date.now()}`,
+      name,
+      email,
+      role,
+      clubId
+    };
+    
+    // Aggiungi l'utente alla lista
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    
+    // Salva nel localStorage
+    localStorage.setItem('clickevent_users', JSON.stringify(updatedUsers));
+    
+    toast({
+      title: 'Utente creato',
+      description: `${name} è stato aggiunto con successo come ${role}`,
+    });
+    
+    return newUser;
+  };
+
+  const getAllUsers = (): User[] => {
+    return users;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -116,6 +198,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         logout,
         role: user?.role || null,
+        createUser,
+        getAllUsers
       }}
     >
       {children}
