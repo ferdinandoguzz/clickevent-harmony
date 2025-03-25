@@ -18,7 +18,6 @@ import EventVouchers from "@/pages/EventVouchers";
 import EventLanding from "@/pages/EventLanding";
 import ClubLanding from "@/pages/ClubLanding";
 import CheckIn from "@/pages/CheckIn";
-import VoucherCheckIn from "@/pages/VoucherCheckIn";
 import Analytics from "@/pages/Analytics";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
@@ -54,7 +53,6 @@ const App = () => (
                 
                 {/* All roles routes */}
                 <Route path="/check-in" element={<CheckIn />} />
-                <Route path="/voucher-check-in" element={<VoucherCheckIn />} />
                 <Route path="/settings" element={<Dashboard />} />
               </Route>
             </Route>
