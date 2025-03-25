@@ -54,7 +54,7 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-muted/20">
       <div className="w-full max-w-md animate-in">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">ClickEvent</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-2">VIPList</h1>
           <p className="text-muted-foreground">Event management made simple</p>
         </div>
         
