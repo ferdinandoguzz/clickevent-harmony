@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { PlusCircle, ArrowLeft, Download, QrCode, Ticket, ShoppingBag, CircleDollarSign, Check, X, Edit, Search, Info } from 'lucide-react';
+import { PlusCircle, ArrowLeft, Download, QrCode, Ticket, ShoppingBag, CircleDollarSign, Check, X, Edit, Search, Info, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -185,15 +186,27 @@ const EventVouchers: React.FC = () => {
   const handleDeletePackage = (packageId: string) => {
     if (!event) return;
     
-    // Check if any vouchers use this package
-    const hasVouchers = vouchers.some(v => v.packageId === packageId);
+    // Get all vouchers associated with this package
+    const associatedVouchers = vouchers.filter(v => v.packageId === packageId);
+    const hasVouchers = associatedVouchers.length > 0;
     
     if (hasVouchers) {
+      // Calculate how many vouchers are redeemed vs. not redeemed
+      const redeemedCount = associatedVouchers.filter(v => v.isRedeemed).length;
+      
       toast({
         title: "Cannot delete package",
-        description: "This package has vouchers associated with it and cannot be deleted.",
+        description: `This package has ${associatedVouchers.length} voucher(s) associated with it (${redeemedCount} redeemed). Switch to the "Purchased Vouchers" tab to see them.`,
         variant: "destructive"
       });
+      
+      // Automatically switch to the Purchases tab to help the user see the associated vouchers
+      setActiveTab('purchases');
+      
+      // Update search to filter for this package name
+      const packageName = event.voucherPackages.find(p => p.id === packageId)?.name || '';
+      setSearchQuery(packageName);
+      
       return;
     }
     
