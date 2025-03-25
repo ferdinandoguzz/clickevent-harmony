@@ -1,11 +1,11 @@
 
 import { Home, CalendarCheck, Users, QrCode, BarChart3, Settings, UserCog } from 'lucide-react';
-import { ReactNode } from 'react';
+import { LucideIcon } from 'lucide-react';
 
 export interface NavItemProps {
   to: string;
   label: string;
-  icon: ReactNode;
+  icon: LucideIcon;
   roles?: Array<'superadmin' | 'admin' | 'staff'>;
 }
 
