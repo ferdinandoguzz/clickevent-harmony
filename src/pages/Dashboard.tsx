@@ -46,7 +46,7 @@ const Dashboard: React.FC = () => {
     <div className="animate-in">
       <header className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to ClickEvent, your all-in-one event management system.</p>
+        <p className="text-muted-foreground">Welcome to VIPList, your all-in-one event management system.</p>
       </header>
 
       {/* Quick Stats */}

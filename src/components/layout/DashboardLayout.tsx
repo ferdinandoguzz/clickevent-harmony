@@ -80,7 +80,7 @@ const MobileNav: React.FC = () => {
         <div className="flex flex-col h-full">
           <div className="p-4 flex items-center justify-between bg-gradient-to-r from-purple-100 to-indigo-100">
             <Link to="/dashboard" className="font-semibold text-lg text-sidebar-foreground" onClick={() => setOpen(false)}>
-              ClickEvent
+              VIPList
             </Link>
             <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
               <X className="h-5 w-5 text-sidebar-foreground" />
@@ -178,7 +178,7 @@ const DashboardLayout: React.FC = () => {
           <div className="flex items-center gap-2">
             {!isMobile && (
               <Link to="/dashboard" className="font-semibold text-lg">
-                ClickEvent
+                VIPList
               </Link>
             )}
             <MobileNav />
