@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
     
-    --primary: 222 47% 11%;
+    --primary: 259 94% 51%;
     --primary-foreground: 210 40% 98%;
     
     --secondary: 210 40% 96.1%;
@@ -23,15 +23,15 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 210 40% 98%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 262 83% 58%;
     
     --radius: 0.75rem;
 
@@ -111,5 +111,21 @@
 
   .nav-link.active {
     @apply bg-secondary text-foreground;
+  }
+  
+  .event-card {
+    @apply bg-gradient-to-br from-white to-purple-50 dark:from-gray-900 dark:to-gray-800;
+  }
+  
+  .event-paid-badge {
+    @apply bg-gradient-to-r from-purple-500 to-blue-500 text-white;
+  }
+  
+  .event-free-badge {
+    @apply bg-gradient-to-r from-green-400 to-emerald-500 text-white;
+  }
+  
+  .card-header-gradient {
+    @apply bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-800 dark:to-slate-800;
   }
 }

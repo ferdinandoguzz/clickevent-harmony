@@ -41,58 +41,64 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onEdit, onDelete })
   const voucherCode = eventVoucher ? eventVoucher.qrCode : `EVENT-${event.id}-VOUCHER`;
 
   return (
-    <Card className="hover-lift">
-      <CardHeader>
+    <Card className="hover-lift event-card overflow-hidden border-purple-100">
+      <CardHeader className="card-header-gradient">
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <Badge variant={event.isPaid ? "default" : "outline"}>
+              <Badge className={event.isPaid ? "event-paid-badge" : "event-free-badge"}>
                 {event.isPaid ? `$${event.price}` : 'Free'}
               </Badge>
-              <Badge variant="secondary">
+              <Badge variant="secondary" className={
+                event.status === 'upcoming' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : event.status === 'past' 
+                    ? 'bg-gray-100 text-gray-800' 
+                    : 'bg-amber-100 text-amber-800'
+              }>
                 {event.status === 'upcoming' ? 'Upcoming' : event.status === 'past' ? 'Past' : 'Draft'}
               </Badge>
             </div>
-            <CardTitle>{event.name}</CardTitle>
-            <CardDescription className="mt-1">{event.description}</CardDescription>
+            <CardTitle className="text-purple-900">{event.name}</CardTitle>
+            <CardDescription className="mt-1 text-purple-700">{event.description}</CardDescription>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-purple-600 hover:text-purple-800 hover:bg-purple-50">
                 <MoreHorizontal className="h-4 w-4" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="text-blue-600 hover:text-blue-800 focus:text-blue-800 hover:bg-blue-50 focus:bg-blue-50">
                 <Link to={`/events/${event.id}`}>
                   <Users className="mr-2 h-4 w-4" />
                   View attendees
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="text-indigo-600 hover:text-indigo-800 focus:text-indigo-800 hover:bg-indigo-50 focus:bg-indigo-50">
                 <Link to={`/events/${event.id}/vouchers`}>
                   <Ticket className="mr-2 h-4 w-4" />
                   Manage vouchers
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="text-sky-600 hover:text-sky-800 focus:text-sky-800 hover:bg-sky-50 focus:bg-sky-50">
                 <Link to={`/event/${event.id}`} target="_blank">
                   <ExternalLink className="mr-2 h-4 w-4" />
                   View Landing Page
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowQrCode(!showQrCode)}>
+              <DropdownMenuItem onClick={() => setShowQrCode(!showQrCode)} className="text-amber-600 hover:text-amber-800 focus:text-amber-800 hover:bg-amber-50 focus:bg-amber-50">
                 <Ticket className="mr-2 h-4 w-4" />
                 {showQrCode ? 'Hide Voucher QR Code' : 'Show Voucher QR Code'}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEdit(event)}>
+              <DropdownMenuItem onClick={() => onEdit(event)} className="text-emerald-600 hover:text-emerald-800 focus:text-emerald-800 hover:bg-emerald-50 focus:bg-emerald-50">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit event
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(event)}>
+              <DropdownMenuItem onClick={() => onDelete(event)} className="text-rose-600 hover:text-rose-800 focus:text-rose-800 hover:bg-rose-50 focus:bg-rose-50">
                 <Trash className="mr-2 h-4 w-4" />
                 Delete event
               </DropdownMenuItem>
@@ -100,30 +106,30 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onEdit, onDelete })
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-6">
         {showQrCode && (
           <div className="mb-4 flex justify-center">
             <QRCodeDisplay value={voucherCode} size="sm" />
           </div>
         )}
-        <div className="flex items-center gap-2 text-sm">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 text-sm text-purple-700">
+          <Calendar className="h-4 w-4 text-purple-500" />
           <span>
             {formatDate(startDate)} {startDate.toDateString() !== endDate.toDateString() ? `- ${formatDate(endDate)}` : ''}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Clock className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 text-sm text-purple-700">
+          <Clock className="h-4 w-4 text-purple-500" />
           <span>{formatTime(startDate)} - {formatTime(endDate)}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <MapPin className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 text-sm text-purple-700">
+          <MapPin className="h-4 w-4 text-purple-500" />
           <span>{event.location}</span>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">{event.clubName}</div>
-        <div className="text-sm font-medium">{event.registrationCount}/{event.maxAttendees} registered</div>
+      <CardFooter className="flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50 py-3">
+        <div className="text-sm font-medium text-purple-700">{event.clubName}</div>
+        <div className="text-sm font-medium text-indigo-700">{event.registrationCount}/{event.maxAttendees} registered</div>
       </CardFooter>
     </Card>
   );
