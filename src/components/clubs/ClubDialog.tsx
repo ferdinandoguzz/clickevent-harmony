@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,18 @@ interface ClubDialogProps {
 const ClubDialog: React.FC<ClubDialogProps> = ({ club, open, onOpenChange, onSave }) => {
   const [name, setName] = useState(club?.name || '');
   const [description, setDescription] = useState(club?.description || '');
+
+  // Add useEffect to update form fields when club or open state changes
+  useEffect(() => {
+    if (club) {
+      setName(club.name || '');
+      setDescription(club.description || '');
+    } else {
+      // Reset form fields when creating a new club
+      setName('');
+      setDescription('');
+    }
+  }, [club, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
