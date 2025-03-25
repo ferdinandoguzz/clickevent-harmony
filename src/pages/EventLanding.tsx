@@ -47,6 +47,7 @@ const EventLanding: React.FC = () => {
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [attendee, setAttendee] = useState<Attendee | null>(null);
+  const [showFullView, setShowFullView] = useState(false);
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(registrationFormSchema),
@@ -110,6 +111,13 @@ const EventLanding: React.FC = () => {
       day: 'numeric', 
       year: 'numeric' 
     });
+  };
+  
+  const formatShortDate = (date: Date) => {
+    return date.toLocaleDateString('it-IT', {
+      day: 'numeric',
+      month: 'long'
+    }).toUpperCase();
   };
   
   const formatTime = (date: Date) => {
@@ -176,6 +184,33 @@ const EventLanding: React.FC = () => {
   // Default poster if none is provided
   const defaultPosterUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb";
 
+  // Poster view (initial screen)
+  if (!showFullView) {
+    return (
+      <div className="h-screen bg-background flex flex-col items-center justify-center">
+        <div 
+          className="max-w-sm w-full mx-auto animate-in fade-in duration-300 cursor-pointer" 
+          onClick={() => setShowFullView(true)}
+        >
+          <div className="rounded-lg overflow-hidden shadow-lg">
+            <img 
+              src={event.poster || defaultPosterUrl} 
+              alt={event.name}
+              className="w-full aspect-[3/4] object-cover"
+            />
+            <div className="bg-primary text-primary-foreground p-4 text-center">
+              <h1 className="text-2xl font-bold">{event.name}</h1>
+              <p className="uppercase mt-1">
+                {formatShortDate(startDate)} | ORE {formatTime(startDate)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Full event details view
   return (
     <div className="container mx-auto px-4 py-8 animate-in">
       <Link 
@@ -502,4 +537,3 @@ const EventLanding: React.FC = () => {
 };
 
 export default EventLanding;
-
