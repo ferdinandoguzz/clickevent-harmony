@@ -23,6 +23,7 @@ import Analytics from "@/pages/Analytics";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
 import StaffManagement from "@/pages/StaffManagement";
+import Settings from "@/pages/Settings";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -85,7 +86,7 @@ const App = () => {
                     
                     {/* All roles routes */}
                     <Route path="/check-in" element={<CheckIn />} />
-                    <Route path="/settings" element={<Dashboard />} />
+                    <Route path="/settings" element={<Settings />} />
                   </Route>
                 </Route>
                 
