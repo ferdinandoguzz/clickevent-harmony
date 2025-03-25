@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { CircleDollarSign, ShoppingCart, Coffee, Pizza, PlusCircle, MinusCircle, Check } from 'lucide-react';
+import { CircleDollarSign, ShoppingCart, Coffee, Pizza, PlusCircle, MinusCircle, Check, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -41,12 +41,19 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
   
   // Handle single voucher purchase from EventLanding page
   const handleSingleVoucherPurchase = () => {
-    if (!voucher || !attendeeId) return;
+    if (!voucher || !attendeeId) {
+      toast({
+        title: "Errore",
+        description: "Devi registrarti prima di acquistare un voucher",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Simulate purchase process
     toast({
-      title: "Processing payment...",
-      description: "Please wait while we process your payment."
+      title: "Elaborazione pagamento...",
+      description: "Attendere mentre elaboriamo il pagamento."
     });
     
     // Simulate payment processing delay
@@ -56,8 +63,8 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
       setPurchaseComplete(true);
       
       toast({
-        title: "Purchase successful!",
-        description: "Your voucher has been generated successfully."
+        title: "Acquisto completato!",
+        description: "Il tuo voucher è stato generato con successo."
       });
       
       if (onPurchaseComplete) {
@@ -80,12 +87,19 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
       return;
     }
     
-    if (!selectedPackage || !attendeeId) return;
+    if (!selectedPackage || !attendeeId) {
+      toast({
+        title: "Errore",
+        description: "Devi registrarti prima di acquistare un voucher",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Simulate purchase process
     toast({
-      title: "Processing payment...",
-      description: "Please wait while we process your payment."
+      title: "Elaborazione pagamento...",
+      description: "Attendere mentre elaboriamo il pagamento."
     });
     
     // Simulate payment processing delay
@@ -95,8 +109,8 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
       setPurchaseComplete(true);
       
       toast({
-        title: "Purchase successful!",
-        description: "Your voucher has been generated successfully."
+        title: "Acquisto completato!",
+        description: "Il tuo voucher è stato generato con successo."
       });
       
       // In a real app, you would save this to the database
@@ -117,9 +131,9 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
           <Check className="h-10 w-10 text-green-600 dark:text-green-300" />
         </div>
         
-        <h2 className="text-2xl font-bold text-center mb-2">Purchase Complete!</h2>
+        <h2 className="text-2xl font-bold text-center mb-2">Acquisto Completato!</h2>
         <p className="text-center text-muted-foreground mb-6">
-          Your voucher has been generated and sent to your email.
+          Il tuo voucher è stato generato e inviato alla tua email.
         </p>
         
         <div className="mb-4">
@@ -141,7 +155,7 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
         </div>
         
         <Button variant="outline" onClick={() => setPurchaseComplete(false)}>
-          Purchase Another Voucher
+          Acquista un altro voucher
         </Button>
       </div>
     );
@@ -153,9 +167,9 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
       <div className="max-w-md mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Complete Your Purchase</CardTitle>
+            <CardTitle>Completa il tuo acquisto</CardTitle>
             <CardDescription>
-              You're purchasing the following voucher
+              Stai acquistando il seguente voucher
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -164,18 +178,21 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
               <div className="text-sm text-muted-foreground mb-3">{voucher.description}</div>
               
               <div className="flex justify-between items-center pt-2 border-t">
-                <span className="font-medium">Total:</span>
+                <span className="font-medium">Totale:</span>
                 <span className="font-bold">€{voucher.price.toFixed(2)}</span>
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
-            <Button className="w-full" onClick={handlePurchase} disabled={!attendeeId}>
+            <Button 
+              className="w-full" 
+              onClick={handlePurchase} 
+              disabled={!attendeeId}>
               <CircleDollarSign className="mr-2 h-4 w-4" />
-              Complete Purchase
+              {attendeeId ? 'Completa Acquisto' : 'Registrati prima di acquistare'}
             </Button>
             <Button variant="ghost" className="w-full" onClick={onPurchaseComplete}>
-              Cancel
+              Annulla
             </Button>
           </CardFooter>
         </Card>
@@ -186,7 +203,7 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
   // Original view for package selection
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Event Vouchers</h2>
+      <h2 className="text-xl font-semibold mb-4">Voucher Evento</h2>
       
       {!selectedPackage ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -204,7 +221,7 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
                         {getContentIcon(item.type)}
                       </div>
                       <span>
-                        {item.quantity}x {item.type === 'drink' ? 'Drink' : 'Food'} Voucher
+                        {item.quantity}x {item.type === 'drink' ? 'Bevanda' : 'Cibo'} Voucher
                       </span>
                     </div>
                   ))}
@@ -213,7 +230,7 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
               <CardFooter className="flex justify-between items-center pt-2 pb-4">
                 <div className="font-semibold">€{pkg.price.toFixed(2)}</div>
                 <Button onClick={() => handleSelectPackage(pkg)}>
-                  Select
+                  Seleziona
                 </Button>
               </CardFooter>
             </Card>
@@ -223,9 +240,9 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
         <div className="max-w-md mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle>Complete Your Purchase</CardTitle>
+              <CardTitle>Completa il tuo acquisto</CardTitle>
               <CardDescription>
-                You're purchasing the following voucher package
+                Stai acquistando il seguente pacchetto voucher
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -240,25 +257,28 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
                         {getContentIcon(item.type)}
                       </div>
                       <span>
-                        {item.quantity}x {item.type === 'drink' ? 'Drink' : 'Food'} Voucher
+                        {item.quantity}x {item.type === 'drink' ? 'Bevanda' : 'Cibo'} Voucher
                       </span>
                     </div>
                   ))}
                 </div>
                 
                 <div className="flex justify-between items-center pt-2 border-t">
-                  <span className="font-medium">Total:</span>
+                  <span className="font-medium">Totale:</span>
                   <span className="font-bold">€{selectedPackage.price.toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-2">
-              <Button className="w-full" onClick={handlePurchase} disabled={!attendeeId}>
+              <Button 
+                className="w-full" 
+                onClick={handlePurchase} 
+                disabled={!attendeeId}>
                 <CircleDollarSign className="mr-2 h-4 w-4" />
-                Complete Purchase
+                {attendeeId ? 'Completa Acquisto' : 'Registrati prima di acquistare'}
               </Button>
               <Button variant="ghost" className="w-full" onClick={() => setSelectedPackage(null)}>
-                Back to Packages
+                Torna ai Pacchetti
               </Button>
             </CardFooter>
           </Card>

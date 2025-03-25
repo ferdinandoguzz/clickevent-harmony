@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, Ticket, Info, User, Mail, Phone, Check } from 'lucide-react';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
@@ -109,6 +110,15 @@ const EventLanding: React.FC = () => {
   };
 
   const handleVoucherClick = (voucher: EventVoucher) => {
+    if (!attendee) {
+      toast({
+        title: "Registrazione richiesta",
+        description: "Devi registrarti all'evento prima di acquistare un voucher",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedVoucher(voucher);
     setPurchaseDialogOpen(true);
   };
@@ -148,8 +158,8 @@ const EventLanding: React.FC = () => {
     
     // Show toast of confirmation
     toast({
-      title: "Email sent!",
-      description: `An email of confirmation has been sent to ${attendee.email}`,
+      title: "Email inviata!",
+      description: `Una email di conferma è stata inviata a ${attendee.email}`,
     });
   };
 
@@ -352,7 +362,7 @@ const EventLanding: React.FC = () => {
                     </AlertDescription>
                   </Alert>
                 </CardContent>
-                <CardFooter className="flex justify-center">
+                <CardFooter className="flex flex-wrap gap-3 justify-center">
                   <Button 
                     variant="outline" 
                     onClick={() => {
@@ -363,13 +373,28 @@ const EventLanding: React.FC = () => {
                   >
                     Registra un'altra persona
                   </Button>
+                  
+                  {vouchers.length > 0 && (
+                    <Button 
+                      variant="default"
+                      onClick={() => {
+                        const scrollTarget = document.getElementById('vouchers-section');
+                        if (scrollTarget) {
+                          scrollTarget.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }}
+                    >
+                      <Ticket className="mr-2 h-4 w-4" />
+                      Acquista Voucher
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             )}
           </div>
           
           <div>
-            <Card className="sticky top-4">
+            <Card id="vouchers-section" className="sticky top-4">
               <CardHeader>
                 <CardTitle>Voucher Disponibili</CardTitle>
                 <CardDescription>Acquista i tuoi voucher per questo evento</CardDescription>
@@ -379,7 +404,9 @@ const EventLanding: React.FC = () => {
                   vouchers.map(voucher => (
                     <div 
                       key={voucher.id}
-                      className="p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                      className={`p-4 border rounded-lg transition-colors ${
+                        attendee ? 'hover:bg-accent cursor-pointer' : 'opacity-80'
+                      }`}
                       onClick={() => handleVoucherClick(voucher)}
                     >
                       <div className="flex justify-between items-start">
@@ -412,7 +439,10 @@ const EventLanding: React.FC = () => {
                   <Info className="h-4 w-4" />
                   <AlertTitle>Voucher</AlertTitle>
                   <AlertDescription className="text-sm">
-                    I voucher acquistati ti saranno inviati via email. Potrai mostrarli all'ingresso dell'evento per accedere.
+                    {!attendee 
+                      ? "Registrati all'evento per poter acquistare i voucher."
+                      : "I voucher acquistati ti saranno inviati via email. Potrai mostrarli all'ingresso dell'evento per accedere."
+                    }
                   </AlertDescription>
                 </Alert>
               </CardFooter>
