@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusCircle, Search, MoreHorizontal, CalendarPlus, Trash, Edit, Users, Calendar, MapPin, DollarSign, Clock } from 'lucide-react';
@@ -45,7 +44,7 @@ const mockEvents = [
     maxAttendees: 100,
     isPaid: true,
     price: 49.99,
-    status: 'upcoming',
+    status: 'upcoming' as const,
   },
   {
     id: '2',
@@ -60,7 +59,7 @@ const mockEvents = [
     maxAttendees: 75,
     isPaid: true,
     price: 25,
-    status: 'upcoming',
+    status: 'upcoming' as const,
   },
   {
     id: '3',
@@ -75,7 +74,7 @@ const mockEvents = [
     maxAttendees: 150,
     isPaid: false,
     price: 0,
-    status: 'upcoming',
+    status: 'upcoming' as const,
   },
   {
     id: '4',
@@ -90,7 +89,7 @@ const mockEvents = [
     maxAttendees: 30,
     isPaid: true,
     price: 15,
-    status: 'past',
+    status: 'past' as const,
   },
   {
     id: '5',
@@ -105,7 +104,7 @@ const mockEvents = [
     maxAttendees: 50,
     isPaid: true,
     price: 35,
-    status: 'past',
+    status: 'past' as const,
   },
 ];
 

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, DownloadCloud, Printer } from 'lucide-react';
+import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, DownloadCloud, Printer, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -31,7 +30,7 @@ const mockEvents = [
     maxAttendees: 100,
     isPaid: true,
     price: 49.99,
-    status: 'upcoming',
+    status: 'upcoming' as const,
     formFields: [
       { id: 'name', label: 'Full Name', type: 'text', required: true },
       { id: 'email', label: 'Email Address', type: 'email', required: true },
@@ -43,7 +42,6 @@ const mockEvents = [
   }
 ];
 
-// Mock attendees
 const mockAttendees = [
   {
     id: '1',
@@ -262,7 +260,7 @@ const EventDetail: React.FC = () => {
     // Fetch event data
     const foundEvent = mockEvents.find(e => e.id === eventId);
     if (foundEvent) {
-      setEvent(foundEvent);
+      setEvent(foundEvent as Event);
     }
 
     // Fetch attendees
@@ -552,7 +550,7 @@ const EventDetail: React.FC = () => {
             </div>
             <div className="flex gap-2">
               <Button onClick={handleExportAttendees} variant="outline" size="sm">
-                <DownloadCloud className="mr-2 h-4 w-4" />
+                <Download className="mr-2 h-4 w-4" />
                 Export to Excel
               </Button>
               <Button onClick={() => window.print()} variant="outline" size="sm">
