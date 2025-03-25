@@ -397,7 +397,11 @@ const EventLanding: React.FC = () => {
             <Card id="vouchers-section" className="sticky top-4">
               <CardHeader>
                 <CardTitle>Voucher Disponibili</CardTitle>
-                <CardDescription>Acquista i tuoi voucher per questo evento</CardDescription>
+                <CardDescription>
+                  {attendee 
+                    ? "Acquista i tuoi voucher per questo evento" 
+                    : "Registrati all'evento per poter acquistare i voucher"}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {vouchers.length > 0 ? (
@@ -405,9 +409,9 @@ const EventLanding: React.FC = () => {
                     <div 
                       key={voucher.id}
                       className={`p-4 border rounded-lg transition-colors ${
-                        attendee ? 'hover:bg-accent cursor-pointer' : 'opacity-80'
+                        attendee ? 'hover:bg-accent cursor-pointer' : 'border-muted hover:border-muted-foreground'
                       }`}
-                      onClick={() => handleVoucherClick(voucher)}
+                      onClick={() => attendee && handleVoucherClick(voucher)}
                     >
                       <div className="flex justify-between items-start">
                         <div>

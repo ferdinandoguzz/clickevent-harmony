@@ -38,7 +38,7 @@ const Index = () => {
               <Link to="/event/event1">Get Started</Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <Link to="/login">Learn More</Link>
+              <Link to="/event/tech-conference-2023">View Demo Event</Link>
             </Button>
           </div>
         </div>
@@ -146,7 +146,7 @@ const Index = () => {
             Join thousands of event planners who trust ClickEvent for their event management needs.
           </p>
           <Button asChild size="lg">
-            <Link to="/event/event1">Get Started Now</Link>
+            <Link to="/event/tech-conference-2023">Try Demo Event</Link>
           </Button>
         </div>
       </section>
