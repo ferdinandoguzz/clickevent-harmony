@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { 
@@ -121,7 +120,6 @@ const UserMenu: React.FC = () => {
 
   if (!user) return null;
 
-  // Get initials from name
   const initials = user.name
     .split(' ')
     .map((n) => n[0])
