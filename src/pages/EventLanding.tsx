@@ -187,24 +187,46 @@ const EventLanding: React.FC = () => {
   // Poster view (initial screen)
   if (!showFullView) {
     return (
-      <div className="h-screen bg-background flex flex-col items-center justify-center">
+      <div className="h-screen bg-gradient-to-b from-background to-accent/10 flex flex-col items-center justify-center p-4">
         <div 
-          className="max-w-sm w-full mx-auto animate-in fade-in duration-300 cursor-pointer" 
+          className="max-w-sm w-full mx-auto animate-in fade-in duration-500 cursor-pointer hover:scale-[1.02] transition-transform" 
           onClick={() => setShowFullView(true)}
         >
-          <div className="rounded-lg overflow-hidden shadow-lg">
-            <img 
-              src={event.poster || defaultPosterUrl} 
-              alt={event.name}
-              className="w-full aspect-[3/4] object-cover"
-            />
-            <div className="bg-primary text-primary-foreground p-4 text-center">
-              <h1 className="text-2xl font-bold">{event.name}</h1>
-              <p className="uppercase mt-1">
+          <div className="rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+            <div className="relative">
+              <img 
+                src={event.poster || defaultPosterUrl} 
+                alt={event.name}
+                className="w-full aspect-[3/4] object-cover"
+              />
+              <div className="absolute top-4 right-4">
+                {event.isPaid ? (
+                  <span className="event-paid-badge text-xs font-semibold px-3 py-1 rounded-full">
+                    {event.price} €
+                  </span>
+                ) : (
+                  <span className="event-free-badge text-xs font-semibold px-3 py-1 rounded-full">
+                    Gratis
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-primary to-accent text-primary-foreground p-5 text-center">
+              <h1 className="text-2xl font-bold mb-1">{event.name}</h1>
+              <p className="uppercase text-sm tracking-wider font-medium">
                 {formatShortDate(startDate)} | ORE {formatTime(startDate)}
               </p>
+              <p className="text-xs mt-2 text-primary-foreground/80">{event.clubName}</p>
+              <div className="flex items-center justify-center mt-3">
+                <button className="text-primary-foreground bg-primary-foreground/20 hover:bg-primary-foreground/30 transition-colors px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
+                  Visualizza Dettagli
+                </button>
+              </div>
             </div>
           </div>
+          <p className="text-center text-xs text-muted-foreground mt-4 animate-pulse">
+            Tocca la card per visualizzare i dettagli completi
+          </p>
         </div>
       </div>
     );
