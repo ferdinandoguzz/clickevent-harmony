@@ -191,6 +191,7 @@ export const useEventDetail = (eventId: string | undefined) => {
     activeTab,
     setActiveTab,
     selectedAttendee,
+    selectedFormField,
     qrDialogOpen,
     setQrDialogOpen,
     formFieldDialogOpen,
