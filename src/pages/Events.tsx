@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, CalendarPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +13,24 @@ import { EmptyEventState } from '@/components/events/EmptyEventState';
 import { mockEvents as eventsData } from '@/data/mockData';
 
 const Events: React.FC = () => {
-  const { role } = useAuth();
-  const [events, setEvents] = useState<Event[]>(eventsData);
+  const { role, user } = useAuth();
+  const [events, setEvents] = useState<Event[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined);
+
+  useEffect(() => {
+    // Filter events based on user role and assigned club
+    if (role === 'staff' && user?.clubId) {
+      // Staff users can only see events for their assigned club
+      const filteredEvents = eventsData.filter(event => event.clubId === user.clubId);
+      setEvents(filteredEvents);
+    } else {
+      // Superadmin and admin users can see all events
+      setEvents(eventsData);
+    }
+  }, [role, user]);
 
   const filteredEvents = events.filter(event => 
     (event.status === activeTab) &&
@@ -94,7 +106,9 @@ const Events: React.FC = () => {
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">Events</h1>
-          <p className="text-muted-foreground">Manage your organization's events.</p>
+          <p className="text-muted-foreground">
+            {role === 'staff' ? 'Manage your club\'s events.' : 'Manage your organization\'s events.'}
+          </p>
         </div>
         {canCreateEvent && (
           <Button onClick={openCreateDialog}>
