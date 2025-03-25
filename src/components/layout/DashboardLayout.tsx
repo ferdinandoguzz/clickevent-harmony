@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import GlobalSearch from './GlobalSearch';
 
 interface NavItemProps {
   to: string;
@@ -42,6 +43,7 @@ const navItems: NavItemProps[] = [
   { to: '/clubs', label: 'Clubs', icon: <Users className="h-4 w-4" />, roles: ['superadmin'] },
   { to: '/events', label: 'Events', icon: <CalendarCheck className="h-4 w-4" />, roles: ['superadmin', 'admin'] },
   { to: '/check-in', label: 'Check-in', icon: <QrCode className="h-4 w-4" />, roles: ['superadmin', 'admin', 'staff'] },
+  { to: '/voucher-check-in', label: 'Voucher Check-in', icon: <QrCode className="h-4 w-4" />, roles: ['superadmin', 'admin', 'staff'] },
   { to: '/analytics', label: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, roles: ['superadmin', 'admin'] },
   { to: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4" />, roles: ['superadmin', 'admin'] },
 ];
@@ -182,11 +184,14 @@ const DashboardLayout: React.FC = () => {
           </div>
           
           <div className="flex-1 flex justify-end items-center gap-2">
+            <GlobalSearch />
+            
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-destructive"></span>
               <span className="sr-only">Notifications</span>
             </Button>
+            
             <UserMenu />
           </div>
         </div>
@@ -197,7 +202,7 @@ const DashboardLayout: React.FC = () => {
           <div className="h-14 flex items-center px-4 bg-gradient-to-r from-purple-100 to-indigo-100 border-b border-sidebar-border">
             <span className="font-medium text-sidebar-foreground">Navigation</span>
           </div>
-          <nav className="h-[calc(100%-3.5rem)] p-4 pt-6">
+          <nav className="h-[calc(100%-3.5rem)] p-4 pt-6 overflow-y-auto">
             <ul className="flex flex-col gap-1">
               {navItems.filter(item => !item.roles || (role && item.roles.includes(role))).map((item) => (
                 <li key={item.to}>

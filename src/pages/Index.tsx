@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarCheck, Users, QrCode, BarChart3, ArrowRight, CheckCircle } from 'lucide-react';
+import { CalendarCheck, Users, QrCode, BarChart3, ArrowRight, CheckCircle, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -21,12 +21,36 @@ const Feature: React.FC<{ title: string; description: string; icon: React.ReactN
   );
 };
 
+const QuickAccessCard: React.FC<{ title: string; description: string; icon: React.ReactNode; to: string }> = ({
+  title,
+  description,
+  icon,
+  to
+}) => (
+  <Card className="hover:shadow-md transition-shadow group">
+    <Link to={to} className="block h-full">
+      <CardHeader>
+        <div className="p-2 w-fit rounded-full bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+          {icon}
+        </div>
+        <CardTitle className="mt-4">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardFooter>
+        <Button variant="ghost" className="p-0 h-auto text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
+          Accedi <ArrowRight className="h-4 w-4" />
+        </Button>
+      </CardFooter>
+    </Link>
+  </Card>
+);
+
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Hero Section */}
       <section className="py-20 px-6 max-w-6xl mx-auto">
-        <div className="text-center mb-16 animate-in">
+        <div className="text-center mb-16 animate-in fade-in-50 duration-500">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
             Simplify Your Event Management
           </h1>
@@ -40,6 +64,37 @@ const Index = () => {
             <Button variant="outline" size="lg" asChild>
               <Link to="/event/tech-conference-2023">View Demo Event</Link>
             </Button>
+          </div>
+        </div>
+
+        {/* Quick Access Section - NEW */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold text-center mb-8">Accesso Rapido</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <QuickAccessCard
+              title="Check-In"
+              description="Gestisci i check-in degli ospiti all'evento"
+              icon={<QrCode className="h-6 w-6" />}
+              to="/check-in"
+            />
+            <QuickAccessCard
+              title="Voucher"
+              description="Scansiona e convalida i voucher"
+              icon={<Ticket className="h-6 w-6" />}
+              to="/voucher-check-in"
+            />
+            <QuickAccessCard
+              title="Eventi"
+              description="Gestisci gli eventi della tua organizzazione"
+              icon={<CalendarCheck className="h-6 w-6" />}
+              to="/events"
+            />
+            <QuickAccessCard
+              title="Analytics"
+              description="Visualizza statistiche e metriche"
+              icon={<BarChart3 className="h-6 w-6" />}
+              to="/analytics"
+            />
           </div>
         </div>
 
