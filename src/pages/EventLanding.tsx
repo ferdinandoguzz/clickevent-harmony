@@ -1,14 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, Ticket, Info } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, Ticket, Info, User, Mail, Phone, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import VoucherPurchase from '@/components/vouchers/VoucherPurchase';
+import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
 import { Event, EventVoucher } from '@/types/event';
 import { mockEvents } from '@/data/mockData';
 
@@ -46,12 +53,45 @@ const mockVouchers: EventVoucher[] = [
   }
 ];
 
+// Schema di validazione per il form di registrazione
+const registrationFormSchema = z.object({
+  firstName: z.string().min(2, { message: "Il nome deve contenere almeno 2 caratteri" }),
+  lastName: z.string().min(2, { message: "Il cognome deve contenere almeno 2 caratteri" }),
+  email: z.string().email({ message: "Inserisci un indirizzo email valido" }),
+  phone: z.string().min(5, { message: "Inserisci un numero di telefono valido" }),
+});
+
+type RegistrationFormValues = z.infer<typeof registrationFormSchema>;
+
+interface Attendee {
+  id: string;
+  eventId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  registrationDate: string;
+  qrCode: string;
+}
+
 const EventLanding: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [vouchers, setVouchers] = useState<EventVoucher[]>([]);
   const [selectedVoucher, setSelectedVoucher] = useState<EventVoucher | null>(null);
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [attendee, setAttendee] = useState<Attendee | null>(null);
+
+  const form = useForm<RegistrationFormValues>({
+    resolver: zodResolver(registrationFormSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+    },
+  });
 
   useEffect(() => {
     // Trova l'evento in base all'ID
@@ -106,6 +146,46 @@ const EventLanding: React.FC = () => {
   const handleVoucherClick = (voucher: EventVoucher) => {
     setSelectedVoucher(voucher);
     setPurchaseDialogOpen(true);
+  };
+
+  const onSubmit = (values: RegistrationFormValues) => {
+    // Genera un QR code unico
+    const qrCode = `EVENT-${eventId}-${Date.now()}-${values.email}`;
+    
+    // Crea un nuovo partecipante
+    const newAttendee: Attendee = {
+      id: `attendee-${Date.now()}`,
+      eventId: eventId || '',
+      firstName: values.firstName,
+      lastName: values.lastName,
+      email: values.email,
+      phone: values.phone,
+      registrationDate: new Date().toISOString(),
+      qrCode: qrCode
+    };
+    
+    // In un'applicazione reale, qui salveremmo i dati nel database
+    console.log('Nuovo partecipante registrato:', newAttendee);
+    
+    // Imposta l'attendee per mostrare il QR code
+    setAttendee(newAttendee);
+    
+    // Mostra il successo della registrazione
+    setRegistrationSuccess(true);
+    
+    // Invia email (simulato)
+    sendConfirmationEmail(newAttendee);
+  };
+
+  const sendConfirmationEmail = (attendee: Attendee) => {
+    // In un'applicazione reale, qui invieremmo l'email tramite un servizio come SendGrid, Mailchimp, ecc.
+    console.log(`Email di conferma inviata a ${attendee.email} con QR code ${attendee.qrCode}`);
+    
+    // Mostra toast di conferma
+    toast({
+      title: "Email inviata!",
+      description: `Un'email di conferma è stata inviata a ${attendee.email}`,
+    });
   };
 
   return (
@@ -187,6 +267,140 @@ const EventLanding: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {!registrationSuccess ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Registrazione</CardTitle>
+                  <CardDescription>Inserisci i tuoi dati per registrarti all'evento</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input placeholder="Inserisci il tuo nome" className="pl-10" {...field} />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cognome</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input placeholder="Inserisci il tuo cognome" className="pl-10" {...field} />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input type="email" placeholder="La tua email" className="pl-10" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormDescription>
+                              Riceverai il QR code a questo indirizzo email
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Numero di telefono</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input placeholder="Il tuo numero di telefono" className="pl-10" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button type="submit" className="w-full">
+                        Registrati all'evento
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Registrazione completata!</CardTitle>
+                  <CardDescription>
+                    Grazie per esserti registrato a {event.name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center">
+                  <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-full bg-green-100">
+                    <Check className="h-6 w-6 text-green-600" />
+                  </div>
+                  <p className="text-center mb-6">
+                    Una email con il tuo QR code è stata inviata a <strong>{attendee?.email}</strong>.<br />
+                    Mostra questo QR code all'ingresso dell'evento.
+                  </p>
+                  
+                  {attendee && (
+                    <div className="mt-4">
+                      <QRCodeDisplay value={attendee.qrCode} size="lg" />
+                    </div>
+                  )}
+                  
+                  <Alert className="mt-6">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Importante</AlertTitle>
+                    <AlertDescription>
+                      Salva questo QR code sul tuo telefono. Ti servirà per accedere all'evento.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+                <CardFooter className="flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setRegistrationSuccess(false);
+                      form.reset();
+                      setAttendee(null);
+                    }}
+                  >
+                    Registra un'altra persona
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
           </div>
           
           <div>
