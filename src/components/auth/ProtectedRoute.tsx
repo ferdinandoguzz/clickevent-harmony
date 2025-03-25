@@ -16,6 +16,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, isLoading, role } = useAuth();
   const location = useLocation();
 
+  console.log("Protected Route - Current role:", role, "Allowed roles:", allowedRoles);
+
   // Show loading state
   if (isLoading) {
     return (
@@ -35,10 +37,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check role permissions
   if (role && allowedRoles.includes(role)) {
+    console.log("Access granted for role:", role);
     return children ? <>{children}</> : <Outlet />;
   }
 
   // Redirect to unauthorized page if role is not allowed
+  console.log("Access denied for role:", role);
   return <Navigate to="/unauthorized" replace />;
 };
 

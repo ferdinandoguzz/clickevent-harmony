@@ -46,18 +46,38 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 
                 {/* Admin & SuperAdmin routes */}
-                <Route path="/clubs" element={<Clubs />} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/events/:eventId" element={<EventDetail />} />
-                <Route path="/events/:eventId/vouchers" element={<EventVouchers />} />
-                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/clubs" element={
+                  <ProtectedRoute allowedRoles={['superadmin']}>
+                    <Clubs />
+                  </ProtectedRoute>
+                } />
+                <Route path="/events" element={
+                  <ProtectedRoute allowedRoles={['superadmin', 'admin']}>
+                    <Events />
+                  </ProtectedRoute>
+                } />
+                <Route path="/events/:eventId" element={
+                  <ProtectedRoute allowedRoles={['superadmin', 'admin']}>
+                    <EventDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/events/:eventId/vouchers" element={
+                  <ProtectedRoute allowedRoles={['superadmin', 'admin']}>
+                    <EventVouchers />
+                  </ProtectedRoute>
+                } />
+                <Route path="/analytics" element={
+                  <ProtectedRoute allowedRoles={['superadmin', 'admin']}>
+                    <Analytics />
+                  </ProtectedRoute>
+                } />
                 
                 {/* SuperAdmin only routes */}
                 <Route path="/staff-management" element={
-                  <ProtectedRoute allowedRoles={['superadmin']} />
-                }>
-                  <Route index element={<StaffManagement />} />
-                </Route>
+                  <ProtectedRoute allowedRoles={['superadmin']}>
+                    <StaffManagement />
+                  </ProtectedRoute>
+                } />
                 
                 {/* All roles routes */}
                 <Route path="/check-in" element={<CheckIn />} />
