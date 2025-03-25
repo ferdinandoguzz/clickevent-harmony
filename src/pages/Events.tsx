@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, Search, MoreHorizontal, CalendarPlus, Trash, Edit, Users, Calendar, MapPin, DollarSign, Clock } from 'lucide-react';
+import { PlusCircle, Search, MoreHorizontal, CalendarPlus, Trash, Edit, Users, Calendar, MapPin, DollarSign, Clock, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
+import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
+import { mockVouchers, mockEvents } from '@/data/mockData';
 
 // Mock data
 const mockEvents = [
@@ -137,6 +139,7 @@ const EventCard: React.FC<{ event: Event; onEdit: (event: Event) => void; onDele
   onEdit, 
   onDelete 
 }) => {
+  const [showQrCode, setShowQrCode] = useState(false);
   const startDate = new Date(event.startDate);
   const endDate = new Date(event.endDate);
   
@@ -147,6 +150,10 @@ const EventCard: React.FC<{ event: Event; onEdit: (event: Event) => void; onDele
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   };
+
+  // Get sample voucher for this event if any
+  const eventVoucher = mockVouchers.find(v => v.eventId === event.id);
+  const voucherCode = eventVoucher ? eventVoucher.qrCode : `EVENT-${event.id}-VOUCHER`;
 
   return (
     <Card className="hover-lift">
@@ -180,6 +187,16 @@ const EventCard: React.FC<{ event: Event; onEdit: (event: Event) => void; onDele
                   View attendees
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to={`/events/${event.id}/vouchers`}>
+                  <Ticket className="mr-2 h-4 w-4" />
+                  Manage vouchers
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowQrCode(!showQrCode)}>
+                <Ticket className="mr-2 h-4 w-4" />
+                {showQrCode ? 'Hide Voucher QR Code' : 'Show Voucher QR Code'}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(event)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit event
@@ -193,6 +210,11 @@ const EventCard: React.FC<{ event: Event; onEdit: (event: Event) => void; onDele
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {showQrCode && (
+          <div className="mb-4 flex justify-center">
+            <QRCodeDisplay value={voucherCode} size="sm" />
+          </div>
+        )}
         <div className="flex items-center gap-2 text-sm">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span>

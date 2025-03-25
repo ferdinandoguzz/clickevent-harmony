@@ -14,15 +14,21 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ value, size = 'md'
     lg: 'w-64 h-64',
   };
   
+  // Simple QR code generation using a data URL
+  const qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(value)}`;
+  
   return (
     <div className="flex flex-col items-center">
       <div className="bg-white p-4 rounded-lg shadow">
-        <div className={`${sizeClasses[size]} flex items-center justify-center border-2 border-dashed border-muted p-4`}>
-          <QrCode className="w-full h-full text-primary" />
-          <span className="sr-only">QR Code: {value}</span>
+        <div className={`${sizeClasses[size]} flex items-center justify-center`}>
+          <img 
+            src={qrCodeDataUrl} 
+            alt={`QR Code: ${value}`} 
+            className="w-full h-full"
+          />
         </div>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">Scan with QR code reader</p>
+      <p className="mt-2 text-xs text-muted-foreground">Scansiona con un lettore QR</p>
       <p className="text-xs font-mono overflow-hidden text-ellipsis max-w-[80%] text-center">{value}</p>
     </div>
   );
