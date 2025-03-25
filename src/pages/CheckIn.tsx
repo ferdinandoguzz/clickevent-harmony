@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { QrCodeIcon, UserCheck, Check, Search, Camera, RefreshCcw, User, Mail, Phone, CalendarCheck, Clock } from 'lucide-react';
+import { QrCodeIcon, UserCheck, Check, Search, Camera, RefreshCcw, User, Mail, Phone, CalendarCheck, Clock, MoreVertical, Download, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,95 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
-// Mock events and attendees (same as in EventDetail)
-const mockEvents = [
-  {
-    id: '1',
-    name: 'Tech Conference 2023',
-  },
-  {
-    id: '2',
-    name: 'Networking Mixer',
-  },
-  {
-    id: '3',
-    name: 'Art Exhibition',
-  },
-];
-
-const mockAttendees = [
-  {
-    id: '1',
-    eventId: '1',
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    phone: '+1 (555) 123-4567',
-    company: 'Tech Corp',
-    jobTitle: 'Software Engineer',
-    dietaryRestrictions: 'Vegetarian',
-    registrationDate: '2023-05-10T14:23:00',
-    checkedIn: true,
-    checkinTime: '2023-06-15T09:15:00',
-    qrCode: 'QR-CODE-UNIQUE-1'
-  },
-  {
-    id: '2',
-    eventId: '1',
-    name: 'Emma Johnson',
-    email: 'emma.johnson@example.com',
-    phone: '+1 (555) 234-5678',
-    company: 'Data Insights',
-    jobTitle: 'Data Scientist',
-    dietaryRestrictions: '',
-    registrationDate: '2023-05-12T09:45:00',
-    checkedIn: true,
-    checkinTime: '2023-06-15T09:30:00',
-    qrCode: 'QR-CODE-UNIQUE-2'
-  },
-  {
-    id: '3',
-    eventId: '1',
-    name: 'Michael Brown',
-    email: 'michael.brown@example.com',
-    phone: '+1 (555) 345-6789',
-    company: 'Innovate LLC',
-    jobTitle: 'Product Manager',
-    dietaryRestrictions: 'Gluten-free',
-    registrationDate: '2023-05-15T16:10:00',
-    checkedIn: false,
-    checkinTime: null,
-    qrCode: 'QR-CODE-UNIQUE-3'
-  },
-  {
-    id: '4',
-    eventId: '2',
-    name: 'Sarah Davis',
-    email: 'sarah.davis@example.com',
-    phone: '+1 (555) 456-7890',
-    company: 'TechStart',
-    jobTitle: 'UX Designer',
-    dietaryRestrictions: '',
-    registrationDate: '2023-05-18T11:30:00',
-    checkedIn: false,
-    checkinTime: null,
-    qrCode: 'QR-CODE-UNIQUE-4'
-  },
-  {
-    id: '5',
-    eventId: '2',
-    name: 'Robert Wilson',
-    email: 'robert.wilson@example.com',
-    phone: '+1 (555) 567-8901',
-    company: 'Cloud Systems',
-    jobTitle: 'DevOps Engineer',
-    dietaryRestrictions: 'No dairy',
-    registrationDate: '2023-05-20T14:00:00',
-    checkedIn: false,
-    checkinTime: null,
-    qrCode: 'QR-CODE-UNIQUE-5'
-  },
-];
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { supabase } from "@/integrations/supabase/client";
 
 interface Event {
   id: string;
@@ -125,8 +44,6 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
   
   const startScanner = () => {
     setIsScanning(true);
-    // In a real implementation, we would use a QR code scanning library
-    // For the prototype, we'll simulate scanning after a delay
     setTimeout(() => {
       const mockQRCode = `QR-CODE-UNIQUE-${Math.floor(Math.random() * 5) + 1}`;
       onScan(mockQRCode);
@@ -190,6 +107,20 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
   );
 };
 
+const QRCodeDisplay: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="bg-white p-4 rounded-lg shadow">
+        <div className="w-48 h-48 flex items-center justify-center border-2 border-dashed border-muted p-4">
+          <QrCodeIcon className="w-full h-full text-primary" />
+          <span className="sr-only">QR Code: {value}</span>
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">Scan with QR code reader</p>
+    </div>
+  );
+};
+
 const AttendeeInfo: React.FC<{ attendee: Attendee; onCheckIn: () => void }> = ({ attendee, onCheckIn }) => {
   const registrationDate = new Date(attendee.registrationDate);
   const checkinTime = attendee.checkinTime ? new Date(attendee.checkinTime) : null;
@@ -241,7 +172,7 @@ const AttendeeInfo: React.FC<{ attendee: Attendee; onCheckIn: () => void }> = ({
               <Clock className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-xs text-muted-foreground">Checked In</div>
-                <div>{checkinTime.toLocaleTimeString()}</div>
+                <div>{checkinTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
               </div>
             </div>
           )}
@@ -280,11 +211,118 @@ const AttendeeInfo: React.FC<{ attendee: Attendee; onCheckIn: () => void }> = ({
 
 const CheckIn: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<string>('1'); // Default to first event
-  const [attendees, setAttendees] = useState<Attendee[]>(mockAttendees);
+  const [attendees, setAttendees] = useState<Attendee[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('scan');
   const [scannedAttendee, setScannedAttendee] = useState<Attendee | null>(null);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [selectedQrCodeAttendee, setSelectedQrCodeAttendee] = useState<Attendee | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select('*');
+        
+        if (eventsError) throw eventsError;
+        
+        const mappedEvents = eventsData.map(event => ({
+          id: event.id,
+          name: event.name
+        }));
+        
+        setEvents(mappedEvents);
+        
+        if (mappedEvents.length > 0) {
+          setSelectedEvent(mappedEvents[0].id);
+        }
+        
+        const { data: attendeesData, error: attendeesError } = await supabase
+          .from('attendees')
+          .select('*')
+          .eq('event_id', mappedEvents[0].id);
+        
+        if (attendeesError) throw attendeesError;
+        
+        const mappedAttendees = attendeesData.map(attendee => ({
+          id: attendee.id,
+          eventId: attendee.event_id,
+          name: attendee.name,
+          email: attendee.email,
+          phone: attendee.phone || '',
+          company: attendee.company || '',
+          jobTitle: attendee.job_title || '',
+          dietaryRestrictions: attendee.dietary_restrictions || '',
+          registrationDate: attendee.registration_date,
+          checkedIn: attendee.checked_in,
+          checkinTime: attendee.checkin_time,
+          qrCode: attendee.qr_code
+        }));
+        
+        setAttendees(mappedAttendees);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: "Error loading data",
+          description: "There was a problem loading events and attendees.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      if (!selectedEvent) return;
+      
+      setLoading(true);
+      try {
+        const { data: attendeesData, error: attendeesError } = await supabase
+          .from('attendees')
+          .select('*')
+          .eq('event_id', selectedEvent);
+        
+        if (attendeesError) throw attendeesError;
+        
+        const mappedAttendees = attendeesData.map(attendee => ({
+          id: attendee.id,
+          eventId: attendee.event_id,
+          name: attendee.name,
+          email: attendee.email,
+          phone: attendee.phone || '',
+          company: attendee.company || '',
+          jobTitle: attendee.job_title || '',
+          dietaryRestrictions: attendee.dietary_restrictions || '',
+          registrationDate: attendee.registration_date,
+          checkedIn: attendee.checked_in,
+          checkinTime: attendee.checkin_time,
+          qrCode: attendee.qr_code
+        }));
+        
+        setAttendees(mappedAttendees);
+      } catch (error) {
+        console.error('Error fetching attendees:', error);
+        toast({
+          title: "Error loading attendees",
+          description: "There was a problem loading attendees for this event.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAttendees();
+  }, [selectedEvent]);
 
   const filteredAttendees = attendees.filter(attendee => 
     attendee.eventId === selectedEvent &&
@@ -294,13 +332,11 @@ const CheckIn: React.FC = () => {
   );
 
   const handleScan = (qrCode: string) => {
-    // Find attendee by QR code
     const attendee = attendees.find(a => a.qrCode === qrCode);
     if (attendee) {
       setScannedAttendee(attendee);
       setSelectedEvent(attendee.eventId);
       
-      // If attendee is from a different event, switch to that event's tab
       if (activeTab !== 'scan') {
         setActiveTab('scan');
       }
@@ -313,11 +349,21 @@ const CheckIn: React.FC = () => {
     }
   };
 
-  const handleCheckIn = (attendeeId: string) => {
+  const handleCheckIn = async (attendeeId: string) => {
     setIsCheckingIn(true);
     
-    // Simulate checking in process
-    setTimeout(() => {
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('attendees')
+        .update({ 
+          checked_in: true, 
+          checkin_time: now 
+        })
+        .eq('id', attendeeId);
+      
+      if (error) throw error;
+      
       setAttendees(
         attendees.map(attendee => {
           if (attendee.id === attendeeId && !attendee.checkedIn) {
@@ -328,24 +374,30 @@ const CheckIn: React.FC = () => {
             return {
               ...attendee,
               checkedIn: true,
-              checkinTime: new Date().toISOString()
+              checkinTime: now
             };
           }
           return attendee;
         })
       );
       
-      // Update scanned attendee if it's the same one
       if (scannedAttendee && scannedAttendee.id === attendeeId) {
         setScannedAttendee({
           ...scannedAttendee,
           checkedIn: true,
-          checkinTime: new Date().toISOString()
+          checkinTime: now
         });
       }
-      
+    } catch (error) {
+      console.error('Error checking in attendee:', error);
+      toast({
+        title: "Check-in failed",
+        description: "There was a problem checking in this attendee.",
+        variant: "destructive"
+      });
+    } finally {
       setIsCheckingIn(false);
-    }, 1000);
+    }
   };
 
   const handleEventChange = (eventId: string) => {
@@ -355,6 +407,61 @@ const CheckIn: React.FC = () => {
 
   const clearScannedAttendee = () => {
     setScannedAttendee(null);
+  };
+
+  const handleViewQR = (attendee: Attendee) => {
+    setSelectedQrCodeAttendee(attendee);
+    setQrDialogOpen(true);
+  };
+
+  const handleSendQRCode = async (attendee: Attendee) => {
+    toast({
+      title: "Sending QR Code",
+      description: `Sending QR code to ${attendee.email}...`
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "QR Code Sent",
+        description: `QR Code has been sent to ${attendee.email}.`
+      });
+    }, 1500);
+  };
+
+  const handleDownloadQR = (attendee: Attendee) => {
+    toast({
+      title: "QR Code downloaded",
+      description: `QR Code for ${attendee.name} has been downloaded.`
+    });
+  };
+
+  const handleDeleteAttendee = async (attendeeId: string) => {
+    try {
+      const { error } = await supabase
+        .from('attendees')
+        .delete()
+        .eq('id', attendeeId);
+      
+      if (error) throw error;
+      
+      setAttendees(attendees.filter(a => a.id !== attendeeId));
+      
+      toast({
+        title: "Attendee deleted",
+        description: "The attendee has been removed from the event."
+      });
+      
+      if (scannedAttendee && scannedAttendee.id === attendeeId) {
+        setScannedAttendee(null);
+      }
+    } catch (error) {
+      console.error('Error deleting attendee:', error);
+      toast({
+        title: "Delete failed",
+        description: "There was a problem deleting this attendee.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -371,16 +478,22 @@ const CheckIn: React.FC = () => {
               <CardTitle>Select Event</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {mockEvents.map(event => (
-                <Button
-                  key={event.id}
-                  variant={selectedEvent === event.id ? "default" : "outline"}
-                  className="w-full justify-start"
-                  onClick={() => handleEventChange(event.id)}
-                >
-                  {event.name}
-                </Button>
-              ))}
+              {events.length > 0 ? (
+                events.map(event => (
+                  <Button
+                    key={event.id}
+                    variant={selectedEvent === event.id ? "default" : "outline"}
+                    className="w-full justify-start"
+                    onClick={() => handleEventChange(event.id)}
+                  >
+                    {event.name}
+                  </Button>
+                ))
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  {loading ? "Loading events..." : "No events found"}
+                </div>
+              )}
             </CardContent>
           </Card>
           
@@ -455,8 +568,12 @@ const CheckIn: React.FC = () => {
                 </div>
               </div>
               
-              {filteredAttendees.length > 0 ? (
-                <div className="rounded-md border">
+              {loading ? (
+                <div className="text-center py-10">
+                  <p className="text-muted-foreground">Loading attendees...</p>
+                </div>
+              ) : filteredAttendees.length > 0 ? (
+                <div className="rounded-md border overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -464,6 +581,7 @@ const CheckIn: React.FC = () => {
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
                         <TableHead className="text-center">Status</TableHead>
+                        <TableHead>Check-in Time</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -478,25 +596,61 @@ const CheckIn: React.FC = () => {
                               {attendee.checkedIn ? 'Checked In' : 'Not Checked In'}
                             </Badge>
                           </TableCell>
+                          <TableCell>
+                            {attendee.checkinTime ? (
+                              new Date(attendee.checkinTime).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              })
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant={attendee.checkedIn ? "secondary" : "default"}
-                              size="sm"
-                              onClick={() => handleCheckIn(attendee.id)}
-                              disabled={attendee.checkedIn || isCheckingIn}
-                            >
-                              {attendee.checkedIn ? (
-                                <>
-                                  <Check className="mr-2 h-4 w-4" />
-                                  Checked In
-                                </>
-                              ) : (
-                                <>
-                                  <UserCheck className="mr-2 h-4 w-4" />
-                                  Check In
-                                </>
+                            <div className="flex justify-end items-center gap-2">
+                              {!attendee.checkedIn && (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleCheckIn(attendee.id)}
+                                  disabled={isCheckingIn}
+                                >
+                                  <UserCheck className="h-4 w-4" />
+                                  <span className="sr-only md:not-sr-only md:ml-2">Check In</span>
+                                </Button>
                               )}
-                            </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleViewQR(attendee)}>
+                                    <QrCodeIcon className="mr-2 h-4 w-4" />
+                                    View QR Code
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleSendQRCode(attendee)}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Send QR Code by Email
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDownloadQR(attendee)}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download QR Code
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDeleteAttendee(attendee.id)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Attendee
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -523,6 +677,41 @@ const CheckIn: React.FC = () => {
           </Tabs>
         </div>
       </div>
+
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Attendee QR Code</DialogTitle>
+            <DialogDescription>
+              {selectedQrCodeAttendee?.name} - {selectedQrCodeAttendee?.email}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center justify-center p-4">
+            {selectedQrCodeAttendee && (
+              <QRCodeDisplay value={selectedQrCodeAttendee.qrCode} />
+            )}
+          </div>
+          
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              className="sm:flex-1"
+              onClick={() => selectedQrCodeAttendee && handleSendQRCode(selectedQrCodeAttendee)}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Email to Attendee
+            </Button>
+            <Button
+              className="sm:flex-1"
+              onClick={() => selectedQrCodeAttendee && handleDownloadQR(selectedQrCodeAttendee)}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download QR Code
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

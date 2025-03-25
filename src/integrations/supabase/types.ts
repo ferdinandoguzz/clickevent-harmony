@@ -9,7 +9,119 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      attendees: {
+        Row: {
+          checked_in: boolean | null
+          checkin_time: string | null
+          company: string | null
+          created_at: string | null
+          dietary_restrictions: string | null
+          email: string
+          event_id: string | null
+          id: string
+          job_title: string | null
+          name: string
+          phone: string | null
+          qr_code: string
+          registration_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          checked_in?: boolean | null
+          checkin_time?: string | null
+          company?: string | null
+          created_at?: string | null
+          dietary_restrictions?: string | null
+          email: string
+          event_id?: string | null
+          id?: string
+          job_title?: string | null
+          name: string
+          phone?: string | null
+          qr_code: string
+          registration_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          checked_in?: boolean | null
+          checkin_time?: string | null
+          company?: string | null
+          created_at?: string | null
+          dietary_restrictions?: string | null
+          email?: string
+          event_id?: string | null
+          id?: string
+          job_title?: string | null
+          name?: string
+          phone?: string | null
+          qr_code?: string
+          registration_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          club_id: string | null
+          club_name: string | null
+          created_at: string | null
+          description: string | null
+          end_date: string
+          id: string
+          is_paid: boolean | null
+          location: string | null
+          max_attendees: number | null
+          name: string
+          price: number | null
+          registration_count: number | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          club_id?: string | null
+          club_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          is_paid?: boolean | null
+          location?: string | null
+          max_attendees?: number | null
+          name: string
+          price?: number | null
+          registration_count?: number | null
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          club_id?: string | null
+          club_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_paid?: boolean | null
+          location?: string | null
+          max_attendees?: number | null
+          name?: string
+          price?: number | null
+          registration_count?: number | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
