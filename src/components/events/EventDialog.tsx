@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,6 +47,50 @@ export const EventDialog: React.FC<EventDialogProps> = ({
   const [price, setPrice] = useState(event?.price?.toString() || '0');
   const [poster, setPoster] = useState<string | undefined>(event?.poster);
   const [posterFile, setPosterFile] = useState<File | null>(null);
+
+  // Aggiunto useEffect per aggiornare i campi del form quando cambia l'evento
+  useEffect(() => {
+    if (event) {
+      setName(event.name || '');
+      setDescription(event.description || '');
+      setClubId(event.clubId || '');
+      setLocation(event.location || '');
+      
+      // Gestione delle date e orari
+      if (event.startDate) {
+        const [date, time] = event.startDate.split('T');
+        setStartDate(date);
+        setStartTime(time ? time.substring(0, 5) : '');
+      }
+      
+      if (event.endDate) {
+        const [date, time] = event.endDate.split('T');
+        setEndDate(date);
+        setEndTime(time ? time.substring(0, 5) : '');
+      }
+      
+      setMaxAttendees(event.maxAttendees?.toString() || '100');
+      setIsPaid(event.isPaid || false);
+      setPrice(event.price?.toString() || '0');
+      setPoster(event.poster);
+      setPosterFile(null);
+    } else {
+      // Reset del form per la creazione di un nuovo evento
+      setName('');
+      setDescription('');
+      setClubId('');
+      setLocation('');
+      setStartDate('');
+      setStartTime('');
+      setEndDate('');
+      setEndTime('');
+      setMaxAttendees('100');
+      setIsPaid(false);
+      setPrice('0');
+      setPoster(undefined);
+      setPosterFile(null);
+    }
+  }, [event, open]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
