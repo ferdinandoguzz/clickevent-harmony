@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, Ticket, Info, User, Mail, Phone, Check } from 'lucide-react';
@@ -17,43 +16,9 @@ import * as z from "zod";
 import VoucherPurchase from '@/components/vouchers/VoucherPurchase';
 import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
 import { Event, EventVoucher } from '@/types/event';
-import { mockEvents } from '@/data/mockData';
+import { mockEvents, mockVouchers } from '@/data/mockData';
 
-// Dati di esempio per i voucher
-const mockVouchers: EventVoucher[] = [
-  {
-    id: 'voucher1',
-    eventId: 'event1',
-    name: 'Standard Entry',
-    description: 'Standard entry ticket to the event',
-    price: 15,
-    quantity: 100,
-    remaining: 85,
-    isActive: true
-  },
-  {
-    id: 'voucher2',
-    eventId: 'event1',
-    name: 'VIP Access',
-    description: 'VIP access with exclusive perks',
-    price: 50,
-    quantity: 20,
-    remaining: 10,
-    isActive: true
-  },
-  {
-    id: 'voucher3',
-    eventId: 'event2',
-    name: 'Regular Ticket',
-    description: 'Regular admission ticket',
-    price: 25,
-    quantity: 150,
-    remaining: 120,
-    isActive: true
-  }
-];
-
-// Schema di validazione per il form di registrazione
+// Registration form schema
 const registrationFormSchema = z.object({
   firstName: z.string().min(2, { message: "Il nome deve contenere almeno 2 caratteri" }),
   lastName: z.string().min(2, { message: "Il cognome deve contenere almeno 2 caratteri" }),
@@ -94,14 +59,14 @@ const EventLanding: React.FC = () => {
   });
 
   useEffect(() => {
-    // Trova l'evento in base all'ID
+    // Find the event by ID
     const foundEvent = mockEvents.find(e => e.id === eventId);
     if (foundEvent) {
       setEvent(foundEvent);
     }
 
-    // Filtra i voucher per questo evento
-    const eventVouchers = mockVouchers.filter(v => v.eventId === eventId && v.isActive);
+    // Filter vouchers for this event from mockData
+    const eventVouchers = mockVouchers.filter(v => v.eventId === eventId);
     setVouchers(eventVouchers);
   }, [eventId]);
 
@@ -124,8 +89,8 @@ const EventLanding: React.FC = () => {
     );
   }
 
-  const startDate = new Date(event.startDate);
-  const endDate = new Date(event.endDate);
+  const startDate = new Date(event?.startDate || '');
+  const endDate = new Date(event?.endDate || '');
   
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('it-IT', { 
@@ -149,10 +114,10 @@ const EventLanding: React.FC = () => {
   };
 
   const onSubmit = (values: RegistrationFormValues) => {
-    // Genera un QR code unico
+    // Generate a unique QR code
     const qrCode = `EVENT-${eventId}-${Date.now()}-${values.email}`;
     
-    // Crea un nuovo partecipante
+    // Create a new attendee
     const newAttendee: Attendee = {
       id: `attendee-${Date.now()}`,
       eventId: eventId || '',
@@ -164,27 +129,27 @@ const EventLanding: React.FC = () => {
       qrCode: qrCode
     };
     
-    // In un'applicazione reale, qui salveremmo i dati nel database
-    console.log('Nuovo partecipante registrato:', newAttendee);
+    // In a real application, we would save the data to a database
+    console.log('New attendee registered:', newAttendee);
     
-    // Imposta l'attendee per mostrare il QR code
+    // Set the attendee to show the QR code
     setAttendee(newAttendee);
     
-    // Mostra il successo della registrazione
+    // Show the registration success
     setRegistrationSuccess(true);
     
-    // Invia email (simulato)
+    // Send confirmation email (simulated)
     sendConfirmationEmail(newAttendee);
   };
 
   const sendConfirmationEmail = (attendee: Attendee) => {
-    // In un'applicazione reale, qui invieremmo l'email tramite un servizio come SendGrid, Mailchimp, ecc.
-    console.log(`Email di conferma inviata a ${attendee.email} con QR code ${attendee.qrCode}`);
+    // In a real application, we would send the email via a service like SendGrid, Mailchimp, etc.
+    console.log(`Email of confirmation sent to ${attendee.email} with QR code ${attendee.qrCode}`);
     
-    // Mostra toast di conferma
+    // Show toast of confirmation
     toast({
-      title: "Email inviata!",
-      description: `Un'email di conferma è stata inviata a ${attendee.email}`,
+      title: "Email sent!",
+      description: `An email of confirmation has been sent to ${attendee.email}`,
     });
   };
 
@@ -461,13 +426,14 @@ const EventLanding: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Acquista Voucher</DialogTitle>
             <DialogDescription>
-              {selectedVoucher?.name} - {event.name}
+              {selectedVoucher?.name} - {event?.name}
             </DialogDescription>
           </DialogHeader>
           
           {selectedVoucher && (
             <VoucherPurchase 
               voucher={selectedVoucher}
+              attendeeId={attendee?.id}
               onPurchaseComplete={() => setPurchaseDialogOpen(false)}
             />
           )}

@@ -35,7 +35,7 @@ const Index = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg">
-              <Link to="/login">Get Started</Link>
+              <Link to="/event/event1">Get Started</Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
               <Link to="/login">Learn More</Link>
@@ -146,7 +146,7 @@ const Index = () => {
             Join thousands of event planners who trust ClickEvent for their event management needs.
           </p>
           <Button asChild size="lg">
-            <Link to="/login">Get Started Now</Link>
+            <Link to="/event/event1">Get Started Now</Link>
           </Button>
         </div>
       </section>
