@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,11 +38,11 @@ const GlobalSearch: React.FC = () => {
         { id: '1', title: 'Tech Conference 2023', type: 'event', path: '/events/tech-conference-2023' },
         { id: '2', title: 'Coffee Break Voucher', type: 'voucher', path: '/events/1/vouchers' },
         { id: '3', title: 'Mario Rossi', type: 'attendee', path: '/check-in' },
-      ].filter(item => 
-        item.title.toLowerCase().includes(query.toLowerCase())
-      );
+      ];
       
-      setResults(mockResults);
+      setResults(mockResults.filter(item => 
+        item.title.toLowerCase().includes(query.toLowerCase())
+      ));
       setIsSearching(false);
     }, 500);
   };
