@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, Ticket, Info, User, Mail, Phone, Check } from 'lucide-react';
@@ -174,6 +173,9 @@ const EventLanding: React.FC = () => {
     });
   };
 
+  // Default poster if none is provided
+  const defaultPosterUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb";
+
   return (
     <div className="container mx-auto px-4 py-8 animate-in">
       <Link 
@@ -185,6 +187,17 @@ const EventLanding: React.FC = () => {
       </Link>
       
       <div className="max-w-4xl mx-auto">
+        {/* Event Poster */}
+        {(event.poster || defaultPosterUrl) && (
+          <div className="mb-8 rounded-lg overflow-hidden max-h-[400px] flex justify-center bg-muted">
+            <img 
+              src={event.poster || defaultPosterUrl} 
+              alt={event.name} 
+              className="w-full object-cover"
+            />
+          </div>
+        )}
+        
         <header className="mb-8">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant={event.isPaid ? "default" : "outline"}>
@@ -489,3 +502,4 @@ const EventLanding: React.FC = () => {
 };
 
 export default EventLanding;
+

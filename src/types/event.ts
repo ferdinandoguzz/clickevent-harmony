@@ -1,4 +1,3 @@
-
 export interface Event {
   id: string;
   name: string;
@@ -13,6 +12,7 @@ export interface Event {
   isPaid: boolean;
   price: number;
   status: 'upcoming' | 'past' | 'draft';
+  poster?: string; // URL to the poster image
 }
 
 export interface Club {

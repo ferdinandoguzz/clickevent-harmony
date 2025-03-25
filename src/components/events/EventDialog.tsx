@@ -14,7 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Image } from 'lucide-react';
 import { Event, Club } from '@/types/event';
+import { toast } from '@/hooks/use-toast';
 
 // Make sure mockClubs is imported from the mock data for now
 import { mockClubs as clubs } from '@/data/mockData';
@@ -43,6 +45,51 @@ export const EventDialog: React.FC<EventDialogProps> = ({
   const [maxAttendees, setMaxAttendees] = useState(event?.maxAttendees?.toString() || '100');
   const [isPaid, setIsPaid] = useState(event?.isPaid || false);
   const [price, setPrice] = useState(event?.price?.toString() || '0');
+  const [poster, setPoster] = useState<string | undefined>(event?.poster);
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Check if the file is an image
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Errore",
+          description: "Il file deve essere un'immagine",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Check if the file is not too big (e.g., 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Errore",
+          description: "L'immagine è troppo grande. Dimensione massima: 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // For demo purposes, create a data URL to display the image
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target) {
+          setPoster(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+      
+      // Store the file for later processing
+      setPosterFile(file);
+    }
+  };
+  
+  const removePoster = () => {
+    setPoster(undefined);
+    setPosterFile(null);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +106,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
       isPaid,
       price: isPaid ? parseFloat(price) : 0,
       status: 'upcoming',
+      poster: poster
     };
     
     onSave(eventData);
@@ -104,6 +152,41 @@ export const EventDialog: React.FC<EventDialogProps> = ({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Event Poster</Label>
+              {poster ? (
+                <div className="relative mt-2 rounded-lg overflow-hidden border border-border">
+                  <img src={poster} alt="Event poster" className="w-full max-h-[200px] object-cover" />
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    size="sm" 
+                    className="absolute top-2 right-2"
+                    onClick={removePoster}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-12 text-center cursor-pointer hover:bg-accent/50 transition-colors">
+                  <Input
+                    id="poster"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <Label htmlFor="poster" className="flex flex-col items-center cursor-pointer">
+                    <Image className="h-12 w-12 text-muted-foreground mb-4" />
+                    <span className="text-sm font-medium mb-1">Carica la locandina dell'evento</span>
+                    <span className="text-xs text-muted-foreground">
+                      PNG, JPG, GIF fino a 5MB
+                    </span>
+                  </Label>
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">

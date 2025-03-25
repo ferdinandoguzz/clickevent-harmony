@@ -55,6 +55,7 @@ const Events: React.FC = () => {
       isPaid: eventData.isPaid || false,
       price: eventData.price || 0,
       status: 'upcoming',
+      poster: eventData.poster
     };
     
     setEvents([newEvent, ...events]);
