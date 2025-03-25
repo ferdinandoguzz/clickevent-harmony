@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { 
@@ -43,7 +42,6 @@ const navItems: NavItemProps[] = [
   { to: '/clubs', label: 'Clubs', icon: <Users className="h-4 w-4" />, roles: ['superadmin'] },
   { to: '/events', label: 'Events', icon: <CalendarCheck className="h-4 w-4" />, roles: ['superadmin', 'admin'] },
   { to: '/check-in', label: 'Check-in', icon: <QrCode className="h-4 w-4" />, roles: ['superadmin', 'admin', 'staff'] },
-  { to: '/voucher-check-in', label: 'Voucher Check-in', icon: <QrCode className="h-4 w-4" />, roles: ['superadmin', 'admin', 'staff'] },
   { to: '/analytics', label: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, roles: ['superadmin', 'admin'] },
   { to: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4" />, roles: ['superadmin', 'admin'] },
 ];
