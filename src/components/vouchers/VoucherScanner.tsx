@@ -1,11 +1,10 @@
-
 import React, { useState, useRef } from 'react';
 import { Camera, RefreshCcw, Check, X, Coffee, Pizza } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { mockVouchers, mockAttendees } from '@/data/mockData';
+import { mockVouchers, mockAttendees, mockPurchasedVouchers } from '@/data/mockData';
 
 interface VoucherScannerProps {
   eventId: string;
@@ -32,7 +31,7 @@ const VoucherScanner: React.FC<VoucherScannerProps> = ({ eventId, onVoucherRedee
     // For the prototype, we'll simulate scanning after a delay
     setTimeout(() => {
       // Get a random voucher for this event
-      const eventVouchers = mockVouchers.filter(v => v.eventId === eventId);
+      const eventVouchers = mockPurchasedVouchers.filter(v => v.eventId === eventId);
       
       if (eventVouchers.length === 0) {
         toast({

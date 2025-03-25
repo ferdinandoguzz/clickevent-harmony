@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import VoucherPurchase from '@/components/vouchers/VoucherPurchase';
 import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
-import { Event, EventVoucher } from '@/types/event';
+import { Event, EventVoucher, PurchasedVoucher } from '@/types/event';
 import { mockEvents, mockVouchers } from '@/data/mockData';
 
 // Registration form schema
@@ -66,9 +66,20 @@ const EventLanding: React.FC = () => {
       setEvent(foundEvent);
     }
 
-    // Filter vouchers for this event from mockData
-    const eventVouchers = mockVouchers.filter(v => v.eventId === eventId);
-    setVouchers(eventVouchers);
+    // Create EventVoucher objects from the event's voucherPackages
+    if (foundEvent && foundEvent.voucherPackages) {
+      const eventVouchers: EventVoucher[] = foundEvent.voucherPackages.map(pkg => ({
+        id: pkg.id,
+        eventId: foundEvent.id,
+        name: pkg.name,
+        description: pkg.description,
+        price: pkg.price,
+        quantity: 100, // Default value
+        remaining: 50, // Default value
+        isActive: true
+      }));
+      setVouchers(eventVouchers);
+    }
   }, [eventId]);
 
   if (!event) {

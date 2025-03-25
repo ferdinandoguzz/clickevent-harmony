@@ -1,4 +1,3 @@
-
 // Club data
 export const mockClubs = [
   {
@@ -124,8 +123,8 @@ export const mockAttendees = [
   }
 ];
 
-// Purchased vouchers data
-export const mockVouchers = [
+// Purchased vouchers data (renamed from mockVouchers to reflect they are purchased vouchers)
+export const mockPurchasedVouchers = [
   {
     id: 'v1',
     eventId: '1',
@@ -151,3 +150,6 @@ export const mockVouchers = [
     qrCode: 'VOUCHER-QR-2'
   }
 ];
+
+// For backward compatibility
+export const mockVouchers = mockPurchasedVouchers;

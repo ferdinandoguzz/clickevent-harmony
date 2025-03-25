@@ -30,3 +30,17 @@ export interface EventVoucher {
   remaining: number;
   isActive: boolean;
 }
+
+// Interface for purchased vouchers
+export interface PurchasedVoucher {
+  id: string;
+  eventId: string;
+  attendeeId: string;
+  packageId: string;
+  packageName: string;
+  purchaseDate: string;
+  price: number;
+  isRedeemed: boolean;
+  redemptionTime: string | null;
+  qrCode: string;
+}
