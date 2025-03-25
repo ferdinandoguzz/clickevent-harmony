@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, Search, MoreHorizontal, Building, Trash, Edit, Users, ExternalLink } from 'lucide-react';
+import { PlusCircle, Search, MoreHorizontal, Building, Trash, Edit, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,12 +58,6 @@ const ClubCard: React.FC<{ club: Club; onEdit: (club: Club) => void; onDelete: (
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to={`/club/${club.id}`}>
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  View Landing Page
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(club)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit club
@@ -92,12 +86,6 @@ const ClubCard: React.FC<{ club: Club; onEdit: (club: Club) => void; onDelete: (
         <span className="text-sm text-muted-foreground">
           Created on {new Date(club.createdAt).toLocaleDateString()}
         </span>
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/club/${club.id}`}>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            View Landing Page
-          </Link>
-        </Button>
       </CardFooter>
     </Card>
   );
