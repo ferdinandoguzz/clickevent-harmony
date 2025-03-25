@@ -25,6 +25,7 @@ const EventDetail: React.FC = () => {
     activeTab,
     setActiveTab,
     selectedAttendee,
+    selectedFormField,
     qrDialogOpen,
     setQrDialogOpen,
     formFieldDialogOpen,
