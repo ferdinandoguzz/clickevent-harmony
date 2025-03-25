@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, Search, MoreHorizontal, Building, Trash, Edit, Users } from 'lucide-react';
+import { PlusCircle, Search, MoreHorizontal, Building, Trash, Edit, Users, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +25,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { mockClubs } from '@/data/mockData';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth, UserRole } from '@/contexts/AuthContext';
 
 interface Club {
   id: string;
@@ -35,10 +37,94 @@ interface Club {
   createdAt: string;
 }
 
-const ClubCard: React.FC<{ club: Club; onEdit: (club: Club) => void; onDelete: (club: Club) => void }> = ({ 
+interface StaffDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (userData: { name: string; email: string; password: string; clubId: string }) => void;
+  clubId: string;
+  clubName: string;
+}
+
+const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, clubId, clubName }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({ name, email, password, clubId });
+    setName('');
+    setEmail('');
+    setPassword('');
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Create Staff User</DialogTitle>
+            <DialogDescription>
+              Add a new staff user for {clubName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter staff name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@example.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Create User</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const ClubCard: React.FC<{ 
+  club: Club; 
+  onEdit: (club: Club) => void; 
+  onDelete: (club: Club) => void;
+  onCreateStaff: (club: Club) => void;
+}> = ({ 
   club, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onCreateStaff
 }) => {
   return (
     <Card className="hover-lift">
@@ -61,6 +147,10 @@ const ClubCard: React.FC<{ club: Club; onEdit: (club: Club) => void; onDelete: (
               <DropdownMenuItem onClick={() => onEdit(club)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit club
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onCreateStaff(club)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Create staff user
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onDelete(club)}>
                 <Trash className="mr-2 h-4 w-4" />
@@ -156,10 +246,13 @@ const ClubDialog: React.FC<{
 };
 
 const Clubs: React.FC = () => {
+  const { createUser } = useAuth();
   const [clubs, setClubs] = useState<Club[]>(mockClubs);
   const [searchQuery, setSearchQuery] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [clubDialogOpen, setClubDialogOpen] = useState(false);
+  const [staffDialogOpen, setStaffDialogOpen] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | undefined>(undefined);
+  const [selectedClub, setSelectedClub] = useState<Club | undefined>(undefined);
 
   const filteredClubs = clubs.filter(club => 
     club.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -208,14 +301,43 @@ const Clubs: React.FC = () => {
     });
   };
 
-  const openCreateDialog = () => {
-    setEditingClub(undefined);
-    setDialogOpen(true);
+  const handleCreateStaffUser = (userData: { name: string; email: string; password: string; clubId: string }) => {
+    try {
+      createUser(
+        userData.name,
+        userData.email,
+        userData.password,
+        'staff',
+        userData.clubId
+      );
+      
+      toast({
+        title: 'Staff user created',
+        description: `Staff user for ${selectedClub?.name} has been created successfully.`,
+      });
+    } catch (error) {
+      console.error('Error creating staff user:', error);
+      toast({
+        title: 'Error',
+        description: 'There was an error creating the staff user.',
+        variant: 'destructive'
+      });
+    }
   };
 
-  const openEditDialog = (club: Club) => {
+  const openCreateClubDialog = () => {
+    setEditingClub(undefined);
+    setClubDialogOpen(true);
+  };
+
+  const openEditClubDialog = (club: Club) => {
     setEditingClub(club);
-    setDialogOpen(true);
+    setClubDialogOpen(true);
+  };
+
+  const openCreateStaffDialog = (club: Club) => {
+    setSelectedClub(club);
+    setStaffDialogOpen(true);
   };
 
   return (
@@ -225,7 +347,7 @@ const Clubs: React.FC = () => {
           <h1 className="text-3xl font-bold tracking-tight mb-2">Clubs</h1>
           <p className="text-muted-foreground">Manage your organizations and clubs.</p>
         </div>
-        <Button onClick={openCreateDialog}>
+        <Button onClick={openCreateClubDialog}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Create Club
         </Button>
@@ -244,11 +366,21 @@ const Clubs: React.FC = () => {
       </div>
 
       <ClubDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={clubDialogOpen}
+        onOpenChange={setClubDialogOpen}
         club={editingClub}
         onSave={editingClub ? handleEditClub : handleCreateClub}
       />
+
+      {selectedClub && (
+        <StaffDialog
+          open={staffDialogOpen}
+          onOpenChange={setStaffDialogOpen}
+          onSave={handleCreateStaffUser}
+          clubId={selectedClub.id}
+          clubName={selectedClub.name}
+        />
+      )}
 
       {filteredClubs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -256,8 +388,9 @@ const Clubs: React.FC = () => {
             <ClubCard
               key={club.id}
               club={club}
-              onEdit={openEditDialog}
+              onEdit={openEditClubDialog}
               onDelete={handleDeleteClub}
+              onCreateStaff={openCreateStaffDialog}
             />
           ))}
         </div>
@@ -273,7 +406,7 @@ const Clubs: React.FC = () => {
               Clear search
             </Button>
           ) : (
-            <Button onClick={openCreateDialog}>
+            <Button onClick={openCreateClubDialog}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Create your first club
             </Button>
