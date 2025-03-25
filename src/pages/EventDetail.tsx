@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, Printer, Edit, Ticket, UserPlus } from 'lucide-react';
@@ -23,6 +22,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
 
 interface FormField {
   id: string;
@@ -62,20 +62,6 @@ interface Attendee {
   checkinTime: string | null;
   qrCode: string;
 }
-
-const QRCodeDisplay: React.FC<{ value: string }> = ({ value }) => {
-  return (
-    <div className="flex flex-col items-center">
-      <div className="bg-white p-4 rounded-lg shadow">
-        <div className="w-48 h-48 flex items-center justify-center border-2 border-dashed border-muted p-4">
-          <QrCode className="w-full h-full text-primary" />
-          <span className="sr-only">QR Code: {value}</span>
-        </div>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">Scan with QR code reader</p>
-    </div>
-  );
-};
 
 const RegistrationForm: React.FC<{ event: Event; onAddAttendee: (attendee: Partial<Attendee>) => void }> = ({ 
   event, 
@@ -877,7 +863,7 @@ const EventDetail: React.FC = () => {
           
           <div className="flex flex-col items-center justify-center p-4">
             {selectedAttendee && (
-              <QRCodeDisplay value={selectedAttendee.qrCode} />
+              <QRCodeDisplay value={selectedAttendee.qrCode} size="md" />
             )}
           </div>
           
