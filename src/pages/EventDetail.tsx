@@ -331,6 +331,22 @@ const EventDetail: React.FC = () => {
     setSelectedFormField(null);
   };
 
+  const handleDeleteFormField = (fieldId: string) => {
+    if (event) {
+      const updatedFormFields = event.formFields.filter(f => f.id !== fieldId);
+      
+      setEvent({
+        ...event,
+        formFields: updatedFormFields
+      });
+      
+      toast({
+        title: "Field deleted",
+        description: "The form field has been deleted successfully."
+      });
+    }
+  };
+
   return (
     <div className="animate-in">
       <header className="mb-8">
@@ -657,6 +673,13 @@ const EventDetail: React.FC = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDeleteFormField(field.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -715,6 +738,7 @@ const EventDetail: React.FC = () => {
         onOpenChange={setFormFieldDialogOpen}
         field={selectedFormField}
         onSave={handleSaveFormField}
+        onDelete={handleDeleteFormField}
       />
     </div>
   );
