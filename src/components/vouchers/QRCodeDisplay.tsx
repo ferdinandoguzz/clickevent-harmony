@@ -14,7 +14,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ value, size = 'md'
     lg: 'w-64 h-64',
   };
   
-  // Simple QR code generation using a data URL
+  // QR code generato usando un servizio API
   const qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(value)}`;
   
   return (

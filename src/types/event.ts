@@ -19,3 +19,14 @@ export interface Club {
   id: string;
   name: string;
 }
+
+export interface EventVoucher {
+  id: string;
+  eventId: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  remaining: number;
+  isActive: boolean;
+}

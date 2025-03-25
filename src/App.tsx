@@ -15,6 +15,7 @@ import Clubs from "@/pages/Clubs";
 import Events from "@/pages/Events";
 import EventDetail from "@/pages/EventDetail";
 import EventVouchers from "@/pages/EventVouchers";
+import EventLanding from "@/pages/EventLanding";
 import ClubLanding from "@/pages/ClubLanding";
 import CheckIn from "@/pages/CheckIn";
 import VoucherCheckIn from "@/pages/VoucherCheckIn";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/club/:clubId" element={<ClubLanding />} />
+            <Route path="/event/:eventId" element={<EventLanding />} />
             
             {/* Protected routes with dashboard layout */}
             <Route element={<ProtectedRoute />}>
