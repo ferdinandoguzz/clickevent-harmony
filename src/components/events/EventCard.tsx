@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Users, Edit, Trash, Ticket, Calendar, MapPin, Clock } from 'lucide-react';
+import { MoreHorizontal, Users, Edit, Trash, Ticket, Calendar, MapPin, Clock, ExternalLink } from 'lucide-react';
 import { Event } from '@/types/event';
 import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
 import { mockVouchers } from '@/data/mockData';
@@ -76,6 +76,12 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onEdit, onDelete })
                 <Link to={`/events/${event.id}/vouchers`}>
                   <Ticket className="mr-2 h-4 w-4" />
                   Manage vouchers
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to={`/event/${event.id}`} target="_blank">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View Landing Page
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setShowQrCode(!showQrCode)}>
