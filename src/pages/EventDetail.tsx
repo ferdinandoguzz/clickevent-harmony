@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, Printer, Edit, Ticket } from 'lucide-react';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
@@ -16,6 +15,9 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockEvents, mockAttendees } from '@/data/mockData';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { FormFieldDialog } from '@/components/events/FormFieldDialog';
 
 interface FormField {
   id: string;
@@ -157,6 +159,8 @@ const EventDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [formFieldDialogOpen, setFormFieldDialogOpen] = useState(false);
+  const [selectedFormField, setSelectedFormField] = useState<FormField | null>(null);
 
   useEffect(() => {
     const foundEvent = mockEvents.find(e => e.id === eventId);
@@ -281,6 +285,50 @@ const EventDetail: React.FC = () => {
       title: "Attendee list exported",
       description: "The attendee list has been exported as an Excel file."
     });
+  };
+
+  const handleEditFormField = (field: FormField) => {
+    setSelectedFormField(field);
+    setFormFieldDialogOpen(true);
+  };
+
+  const handleAddFormField = () => {
+    setSelectedFormField(null);
+    setFormFieldDialogOpen(true);
+  };
+
+  const handleSaveFormField = (field: FormField) => {
+    if (event) {
+      let updatedFormFields;
+      
+      if (selectedFormField) {
+        updatedFormFields = event.formFields.map(f => 
+          f.id === field.id ? field : f
+        );
+        toast({
+          title: "Field updated",
+          description: `The field "${field.label}" has been updated successfully.`
+        });
+      } else {
+        const newField = {
+          ...field,
+          id: `field-${Date.now()}`
+        };
+        updatedFormFields = [...event.formFields, newField];
+        toast({
+          title: "Field added",
+          description: `The field "${field.label}" has been added successfully.`
+        });
+      }
+      
+      setEvent({
+        ...event,
+        formFields: updatedFormFields
+      });
+    }
+    
+    setFormFieldDialogOpen(false);
+    setSelectedFormField(null);
   };
 
   return (
@@ -602,20 +650,24 @@ const EventDetail: React.FC = () => {
                           </div>
                         </div>
                         <div>
-                          <Button variant="ghost" size="icon" disabled>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEditFormField(field)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
                     ))}
-                    <Button variant="outline" className="w-full" disabled>
+                    <Button variant="outline" className="w-full" onClick={handleAddFormField}>
                       <Plus className="mr-2 h-4 w-4" />
                       Add Field
                     </Button>
                   </div>
                 </CardContent>
                 <CardFooter className="text-sm text-muted-foreground">
-                  Form builder functionality will be enabled in a future update.
+                  You can add, edit, or delete form fields to customize your registration form.
                 </CardFooter>
               </Card>
             </div>
@@ -657,6 +709,13 @@ const EventDetail: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <FormFieldDialog 
+        open={formFieldDialogOpen} 
+        onOpenChange={setFormFieldDialogOpen}
+        field={selectedFormField}
+        onSave={handleSaveFormField}
+      />
     </div>
   );
 };
