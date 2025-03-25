@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { VoucherPurchase } from '@/components/vouchers/VoucherPurchase';
+import VoucherPurchase from '@/components/vouchers/VoucherPurchase';
 import { Event, EventVoucher } from '@/types/event';
 import { mockEvents } from '@/data/mockData';
 
@@ -229,7 +229,7 @@ const EventLanding: React.FC = () => {
               </CardContent>
               <CardFooter className="block">
                 <Separator className="my-2" />
-                <Alert variant="outline" className="mt-4">
+                <Alert className="mt-4">
                   <Info className="h-4 w-4" />
                   <AlertTitle>Voucher</AlertTitle>
                   <AlertDescription className="text-sm">
