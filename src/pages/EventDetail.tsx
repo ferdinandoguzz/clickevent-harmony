@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, Printer, Edit, Ticket, UserPlus } from 'lucide-react';
@@ -907,6 +908,15 @@ const EventDetail: React.FC = () => {
         onSave={handleSaveFormField}
         onDelete={handleDeleteFormField}
       />
+      
+      <ManualAttendeeForm
+        eventId={event.id}
+        onAddAttendee={handleAddAttendee}
+        open={manualAddDialogOpen}
+        onOpenChange={setManualAddDialogOpen}
+      />
+    </div>
+  );
+};
 
-
-
+export default EventDetail;
