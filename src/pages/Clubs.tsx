@@ -23,7 +23,8 @@ const Clubs: React.FC = () => {
 
   const filteredClubs = clubs.filter(club => 
     club.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    club.description.toLowerCase().includes(searchQuery.toLowerCase())
+    club.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (club.location && club.location.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleCreateClub = (clubData: Omit<Club, 'id' | 'memberCount' | 'eventCount' | 'createdAt'>) => {
@@ -31,6 +32,8 @@ const Clubs: React.FC = () => {
       id: `club-${Date.now()}`,
       name: clubData.name,
       description: clubData.description,
+      logo: clubData.logo,
+      location: clubData.location,
       memberCount: 0,
       eventCount: 0,
       createdAt: new Date().toISOString().split('T')[0],
@@ -48,7 +51,13 @@ const Clubs: React.FC = () => {
     
     const updatedClubs = clubs.map(club => 
       club.id === editingClub.id 
-        ? { ...club, name: clubData.name, description: clubData.description } 
+        ? { 
+            ...club, 
+            name: clubData.name, 
+            description: clubData.description,
+            logo: clubData.logo,
+            location: clubData.location
+          } 
         : club
     );
     

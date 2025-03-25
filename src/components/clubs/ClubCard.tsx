@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Building, Edit, MoreHorizontal, Trash, UserPlus, Users } from 'lucide-react';
+import { Building, Edit, MoreHorizontal, Trash, UserPlus, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,8 @@ export interface Club {
   memberCount: number;
   eventCount: number;
   createdAt: string;
+  logo?: string;
+  location?: string;
 }
 
 interface ClubCardProps {
@@ -33,9 +36,18 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, onEdit, onDelete, onCreateSta
     <Card className="hover-lift">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <CardTitle>{club.name}</CardTitle>
-            <CardDescription className="mt-1">{club.description}</CardDescription>
+          <div className="flex items-start gap-3">
+            <Avatar className="h-12 w-12 border">
+              {club.logo ? (
+                <AvatarImage src={club.logo} alt={club.name} />
+              ) : (
+                <AvatarFallback>{club.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              )}
+            </Avatar>
+            <div>
+              <CardTitle>{club.name}</CardTitle>
+              <CardDescription className="mt-1">{club.description}</CardDescription>
+            </div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -64,7 +76,7 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, onEdit, onDelete, onCreateSta
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex flex-col gap-2 text-sm">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4 text-muted-foreground" />
             <span>{club.memberCount} members</span>
@@ -73,6 +85,12 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, onEdit, onDelete, onCreateSta
             <Building className="h-4 w-4 text-muted-foreground" />
             <span>{club.eventCount} events</span>
           </div>
+          {club.location && (
+            <div className="flex items-center gap-1">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span>{club.location}</span>
+            </div>
+          )}
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center">

@@ -21,6 +21,7 @@ export interface Event {
   price: number;
   status: 'upcoming' | 'past' | 'draft';
   formFields: FormField[];
+  clubLogo?: string;
 }
 
 export interface Attendee {
