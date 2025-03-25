@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, Printer, Edit, Ticket } from 'lucide-react';
+import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, Printer, Edit, Ticket, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,10 @@ import { mockEvents, mockAttendees } from '@/data/mockData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { FormFieldDialog } from '@/components/events/FormFieldDialog';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 interface FormField {
   id: string;
@@ -151,6 +155,164 @@ const RegistrationForm: React.FC<{ event: Event; onAddAttendee: (attendee: Parti
   );
 };
 
+interface ManualAttendeeFormProps {
+  eventId: string;
+  onAddAttendee: (attendee: Partial<Attendee>) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const ManualAttendeeForm: React.FC<ManualAttendeeFormProps> = ({ 
+  eventId, 
+  onAddAttendee, 
+  open, 
+  onOpenChange 
+}) => {
+  const attendeeFormSchema = z.object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+    email: z.string().email({ message: "Invalid email address" }),
+    phone: z.string().optional(),
+    company: z.string().optional(),
+    jobTitle: z.string().optional(),
+    dietaryRestrictions: z.string().optional(),
+  });
+
+  type AttendeeFormValues = z.infer<typeof attendeeFormSchema>;
+
+  const form = useForm<AttendeeFormValues>({
+    resolver: zodResolver(attendeeFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      jobTitle: "",
+      dietaryRestrictions: "",
+    },
+  });
+
+  const handleSubmit = (values: AttendeeFormValues) => {
+    const newAttendee: Partial<Attendee> = {
+      eventId: eventId,
+      name: values.name,
+      email: values.email,
+      phone: values.phone || '',
+      company: values.company,
+      jobTitle: values.jobTitle,
+      dietaryRestrictions: values.dietaryRestrictions,
+      registrationDate: new Date().toISOString(),
+      checkedIn: false,
+      checkinTime: null,
+      qrCode: `QR-CODE-UNIQUE-${Date.now()}`
+    };
+    
+    onAddAttendee(newAttendee);
+    form.reset();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add Attendee Manually</DialogTitle>
+          <DialogDescription>
+            Enter the attendee details to add them to this event.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Input placeholder="john.doe@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+1 123-456-7890" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="company"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Company Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="jobTitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Job Title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dietaryRestrictions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dietary Restrictions</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Any dietary restrictions..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Add Attendee</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const EventDetail: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<Event | null>(null);
@@ -161,6 +323,7 @@ const EventDetail: React.FC = () => {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [formFieldDialogOpen, setFormFieldDialogOpen] = useState(false);
   const [selectedFormField, setSelectedFormField] = useState<FormField | null>(null);
+  const [manualAddDialogOpen, setManualAddDialogOpen] = useState(false);
 
   useEffect(() => {
     const foundEvent = mockEvents.find(e => e.id === eventId);
@@ -518,6 +681,10 @@ const EventDetail: React.FC = () => {
               />
             </div>
             <div className="flex gap-2">
+              <Button onClick={() => setManualAddDialogOpen(true)} variant="default" size="sm">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add Manually
+              </Button>
               <Button onClick={handleExportAttendees} variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
                 Export to Excel
@@ -740,8 +907,6 @@ const EventDetail: React.FC = () => {
         onSave={handleSaveFormField}
         onDelete={handleDeleteFormField}
       />
-    </div>
-  );
-};
 
-export default EventDetail;
+
+
