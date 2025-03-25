@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, DownloadCloud, Printer, Edit } from 'lucide-react';
+import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, Printer, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,8 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { mockEvents, mockAttendees } from '@/data/mockData';
 
-// Mock data
 const mockEvents = [
   {
     id: '1',
@@ -257,13 +257,11 @@ const EventDetail: React.FC = () => {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch event data
     const foundEvent = mockEvents.find(e => e.id === eventId);
     if (foundEvent) {
       setEvent(foundEvent as Event);
     }
 
-    // Fetch attendees
     const eventAttendees = mockAttendees.filter(a => a.eventId === eventId);
     setAttendees(eventAttendees);
   }, [eventId]);
@@ -365,7 +363,6 @@ const EventDetail: React.FC = () => {
 
     setAttendees([...attendees, attendee]);
     
-    // Update event registration count
     setEvent({
       ...event,
       registrationCount: event.registrationCount + 1
@@ -757,3 +754,4 @@ const EventDetail: React.FC = () => {
 };
 
 export default EventDetail;
+

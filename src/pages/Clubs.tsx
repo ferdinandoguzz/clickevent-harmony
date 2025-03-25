@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
-import { PlusCircle, Search, MoreHorizontal, Building, Trash, Edit, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { PlusCircle, Search, MoreHorizontal, Building, Trash, Edit, Users, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,42 +24,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
-
-// Mock data
-const mockClubs = [
-  {
-    id: '1',
-    name: 'Tech Enthusiasts',
-    description: 'A club for technology enthusiasts and professionals.',
-    memberCount: 125,
-    eventCount: 8,
-    createdAt: '2023-01-10',
-  },
-  {
-    id: '2',
-    name: 'Business Network',
-    description: 'Professional networking for business leaders.',
-    memberCount: 89,
-    eventCount: 5,
-    createdAt: '2023-02-15',
-  },
-  {
-    id: '3',
-    name: 'Creative Arts',
-    description: 'A community for artists and creative professionals.',
-    memberCount: 67,
-    eventCount: 3,
-    createdAt: '2023-03-22',
-  },
-  {
-    id: '4',
-    name: 'Health & Wellness',
-    description: 'Focus on healthy living and wellness practices.',
-    memberCount: 42,
-    eventCount: 2,
-    createdAt: '2023-04-05',
-  },
-];
+import { mockClubs } from '@/data/mockData';
 
 interface Club {
   id: string;
@@ -93,6 +58,12 @@ const ClubCard: React.FC<{ club: Club; onEdit: (club: Club) => void; onDelete: (
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to={`/club/${club.id}`}>
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View Landing Page
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(club)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit club
@@ -117,8 +88,16 @@ const ClubCard: React.FC<{ club: Club; onEdit: (club: Club) => void; onDelete: (
           </div>
         </div>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Created on {new Date(club.createdAt).toLocaleDateString()}
+      <CardFooter className="flex justify-between items-center">
+        <span className="text-sm text-muted-foreground">
+          Created on {new Date(club.createdAt).toLocaleDateString()}
+        </span>
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/club/${club.id}`}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            View Landing Page
+          </Link>
+        </Button>
       </CardFooter>
     </Card>
   );
