@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { 
@@ -72,18 +73,18 @@ const MobileNav: React.FC = () => {
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0">
+      <SheetContent side="left" className="p-0 bg-sidebar border-sidebar-border">
         <div className="flex flex-col h-full">
-          <div className="p-4 flex items-center justify-between">
-            <Link to="/dashboard" className="font-semibold text-lg" onClick={() => setOpen(false)}>
+          <div className="p-4 flex items-center justify-between bg-gradient-to-r from-purple-100 to-indigo-100">
+            <Link to="/dashboard" className="font-semibold text-lg text-sidebar-foreground" onClick={() => setOpen(false)}>
               ClickEvent
             </Link>
             <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5 text-sidebar-foreground" />
               <span className="sr-only">Close</span>
             </Button>
           </div>
-          <Separator />
+          <Separator className="bg-sidebar-border" />
           <nav className="flex-1 overflow-auto p-4">
             <ul className="flex flex-col gap-1">
               {navItems.filter(item => !item.roles || (role && item.roles.includes(role))).map((item) => (
@@ -91,8 +92,8 @@ const MobileNav: React.FC = () => {
                   <NavLink
                     to={item.to}
                     className={({ isActive }) => cn(
-                      'nav-link flex items-center py-2',
-                      isActive && 'active'
+                      'flex items-center py-2 px-3 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200',
+                      isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
                     )}
                     onClick={() => setOpen(false)}
                   >
@@ -192,8 +193,11 @@ const DashboardLayout: React.FC = () => {
       </header>
       
       <div className="flex-1 flex">
-        <aside className="w-64 border-r bg-background h-[calc(100vh-3.5rem)] sticky top-14 max-md:hidden">
-          <nav className="h-full p-4 pt-6">
+        <aside className="w-64 border-r border-sidebar-border bg-sidebar h-[calc(100vh-3.5rem)] sticky top-14 max-md:hidden">
+          <div className="h-14 flex items-center px-4 bg-gradient-to-r from-purple-100 to-indigo-100 border-b border-sidebar-border">
+            <span className="font-medium text-sidebar-foreground">Navigation</span>
+          </div>
+          <nav className="h-[calc(100%-3.5rem)] p-4 pt-6">
             <ul className="flex flex-col gap-1">
               {navItems.filter(item => !item.roles || (role && item.roles.includes(role))).map((item) => (
                 <li key={item.to}>
