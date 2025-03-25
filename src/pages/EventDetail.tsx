@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, Printer, Edit } from 'lucide-react';
+import { ArrowLeft, Download, QrCode, Mail, User, Phone, MapPin, Calendar, Clock, DollarSign, Search, Check, X, Plus, UserCheck, Info, Printer, Edit, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -313,6 +314,12 @@ const EventDetail: React.FC = () => {
             <Button variant="outline" onClick={handleExportAttendees}>
               <Download className="mr-2 h-4 w-4" />
               Export Attendees
+            </Button>
+            <Button variant="default" asChild>
+              <Link to={`/events/${eventId}/vouchers`}>
+                <Ticket className="mr-2 h-4 w-4" />
+                Manage Vouchers
+              </Link>
             </Button>
           </div>
         </div>

@@ -58,6 +58,36 @@ export const mockEvents = [
       { id: 'company', label: 'Company', type: 'text', required: false },
       { id: 'jobTitle', label: 'Job Title', type: 'text', required: false },
       { id: 'dietaryRestrictions', label: 'Dietary Restrictions', type: 'textarea', required: false },
+    ],
+    voucherPackages: [
+      {
+        id: 'vp1',
+        name: '1x Drink Voucher',
+        description: 'Single drink voucher valid for any beverage at the event.',
+        price: 10.00,
+        contents: [
+          { type: 'drink', quantity: 1 }
+        ]
+      },
+      {
+        id: 'vp2',
+        name: '2x Drink Vouchers',
+        description: 'Package of two drink vouchers at a discounted price.',
+        price: 18.00,
+        contents: [
+          { type: 'drink', quantity: 2 }
+        ]
+      },
+      {
+        id: 'vp3',
+        name: '1x Drink + 1x Food Voucher',
+        description: 'Combo package with one drink and one food voucher.',
+        price: 25.00,
+        contents: [
+          { type: 'drink', quantity: 1 },
+          { type: 'food', quantity: 1 }
+        ]
+      }
     ]
   }
 ];
@@ -91,5 +121,33 @@ export const mockAttendees = [
     checkedIn: true,
     checkinTime: '2023-06-15T09:30:00',
     qrCode: 'QR-CODE-UNIQUE-2'
+  }
+];
+
+// Purchased vouchers data
+export const mockVouchers = [
+  {
+    id: 'v1',
+    eventId: '1',
+    attendeeId: '1',
+    packageId: 'vp1',
+    packageName: '1x Drink Voucher',
+    purchaseDate: '2023-06-01T10:15:00',
+    price: 10.00,
+    isRedeemed: false,
+    redemptionTime: null,
+    qrCode: 'VOUCHER-QR-1'
+  },
+  {
+    id: 'v2',
+    eventId: '1',
+    attendeeId: '2',
+    packageId: 'vp3',
+    packageName: '1x Drink + 1x Food Voucher',
+    purchaseDate: '2023-06-02T14:30:00',
+    price: 25.00,
+    isRedeemed: true,
+    redemptionTime: '2023-06-15T12:45:00',
+    qrCode: 'VOUCHER-QR-2'
   }
 ];

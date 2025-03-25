@@ -14,8 +14,10 @@ import Dashboard from "@/pages/Dashboard";
 import Clubs from "@/pages/Clubs";
 import Events from "@/pages/Events";
 import EventDetail from "@/pages/EventDetail";
+import EventVouchers from "@/pages/EventVouchers";
 import ClubLanding from "@/pages/ClubLanding";
 import CheckIn from "@/pages/CheckIn";
+import VoucherCheckIn from "@/pages/VoucherCheckIn";
 import Analytics from "@/pages/Analytics";
 import Unauthorized from "@/pages/Unauthorized";
 import NotFound from "@/pages/NotFound";
@@ -45,10 +47,12 @@ const App = () => (
                 <Route path="/clubs" element={<Clubs />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/events/:eventId" element={<EventDetail />} />
+                <Route path="/events/:eventId/vouchers" element={<EventVouchers />} />
                 <Route path="/analytics" element={<Analytics />} />
                 
                 {/* All roles routes */}
                 <Route path="/check-in" element={<CheckIn />} />
+                <Route path="/voucher-check-in" element={<VoucherCheckIn />} />
                 <Route path="/settings" element={<Dashboard />} />
               </Route>
             </Route>
