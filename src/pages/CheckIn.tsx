@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from "@/integrations/supabase/client";
+import { Html5Qrcode } from 'html5-qrcode';
 
 interface Event {
   id: string;
@@ -40,43 +41,67 @@ interface Attendee {
 
 const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) => {
   const [isScanning, setIsScanning] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerId = "html5-qr-code-scanner";
   
-  const startScanner = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      const mockQRCode = `QR-CODE-UNIQUE-${Math.floor(Math.random() * 5) + 1}`;
-      onScan(mockQRCode);
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(err => console.error('Error stopping scanner:', err));
+      }
+    };
+  }, []);
+  
+  const startScanner = async () => {
+    try {
+      setIsScanning(true);
+      
+      if (!scannerRef.current) {
+        scannerRef.current = new Html5Qrcode(scannerContainerId);
+      }
+      
+      await scannerRef.current.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        },
+        (decodedText) => {
+          onScan(decodedText);
+          stopScanner();
+        },
+        (errorMessage) => {
+          console.log('QR scan error:', errorMessage);
+        }
+      );
+    } catch (err) {
+      console.error('Error starting scanner:', err);
+      toast({
+        title: "Camera access error",
+        description: "Could not access the camera. Please check permissions.",
+        variant: "destructive"
+      });
       setIsScanning(false);
-    }, 2000);
+    }
   };
   
-  const stopScanner = () => {
-    setIsScanning(false);
+  const stopScanner = async () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      try {
+        await scannerRef.current.stop();
+        setIsScanning(false);
+      } catch (err) {
+        console.error('Error stopping scanner:', err);
+      }
+    }
   };
 
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden border-2 border-dashed border-muted mb-4">
         {isScanning ? (
-          <div className="absolute inset-0 bg-black flex items-center justify-center">
-            <video 
-              ref={videoRef} 
-              className="w-full h-full object-cover"
-              playsInline
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-48 h-48 border-2 border-white/50 rounded-lg relative">
-                <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-primary -translate-x-1 -translate-y-1"></div>
-                <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-primary translate-x-1 -translate-y-1"></div>
-                <div className="absolute bottom-0 left-0 w-4 h-4 border-l-2 border-b-2 border-primary -translate-x-1 translate-y-1"></div>
-                <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-primary translate-x-1 translate-y-1"></div>
-              </div>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-full h-0.5 bg-red-500 animate-pulse"></div>
-            </div>
-          </div>
+          <div id={scannerContainerId} className="w-full h-full"></div>
         ) : (
           <div className="absolute inset-0 bg-muted flex flex-col items-center justify-center p-4">
             <Camera className="h-12 w-12 text-muted-foreground mb-2" />
@@ -94,7 +119,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         {isScanning ? (
           <>
             <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-            Cancel Scanning
+            Stop Scanning
           </>
         ) : (
           <>
@@ -210,7 +235,7 @@ const AttendeeInfo: React.FC<{ attendee: Attendee; onCheckIn: () => void }> = ({
 };
 
 const CheckIn: React.FC = () => {
-  const [selectedEvent, setSelectedEvent] = useState<string>('1'); // Default to first event
+  const [selectedEvent, setSelectedEvent] = useState<string>('1');
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -420,12 +445,20 @@ const CheckIn: React.FC = () => {
       description: `Sending QR code to ${attendee.email}...`
     });
     
-    setTimeout(() => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       toast({
         title: "QR Code Sent",
         description: `QR Code has been sent to ${attendee.email}.`
       });
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: "Error Sending Email",
+        description: "Could not send QR code via email. Please try again later.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDownloadQR = (attendee: Attendee) => {
