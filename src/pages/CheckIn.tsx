@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { QrCodeIcon, UserCheck, Check, Search, Camera, RefreshCcw, User, Mail, Phone, CalendarCheck, Clock, MoreVertical, Download, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ interface Attendee {
 
 const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) => {
   const [isScanning, setIsScanning] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = "html5-qr-code-scanner";
   
@@ -55,6 +57,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
   const startScanner = async () => {
     try {
       setIsScanning(true);
+      setPermissionError(null);
       
       if (!scannerRef.current) {
         scannerRef.current = new Html5Qrcode(scannerContainerId);
@@ -77,6 +80,16 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
       );
     } catch (err) {
       console.error('Error starting scanner:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      
+      if (errorMessage.includes('permission')) {
+        setPermissionError('Camera permission was denied. Please enable camera access in your browser settings and try again.');
+      } else if (errorMessage.includes('NotFoundError')) {
+        setPermissionError('No camera found on your device.');
+      } else {
+        setPermissionError(`Could not access the camera: ${errorMessage}`);
+      }
+      
       toast({
         title: "Camera access error",
         description: "Could not access the camera. Please check permissions.",
@@ -111,6 +124,13 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
           </div>
         )}
       </div>
+      
+      {permissionError && (
+        <Alert variant="destructive" className="mb-4 max-w-md">
+          <AlertTitle>Camera Error</AlertTitle>
+          <AlertDescription>{permissionError}</AlertDescription>
+        </Alert>
+      )}
       
       <Button 
         onClick={isScanning ? stopScanner : startScanner} 
