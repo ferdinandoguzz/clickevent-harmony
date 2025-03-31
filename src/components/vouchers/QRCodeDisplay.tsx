@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { QrCode } from 'lucide-react';
 
 interface QRCodeDisplayProps {
   value: string;
