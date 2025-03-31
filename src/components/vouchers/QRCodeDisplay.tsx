@@ -14,7 +14,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ value, size = 'md'
     lg: 'w-64 h-64',
   };
   
-  // QR code generato usando un servizio API
+  // QR code generated using an API service
   const qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(value)}`;
   
   return (
@@ -28,7 +28,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ value, size = 'md'
           />
         </div>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">Scansiona con un lettore QR</p>
+      <p className="mt-2 text-xs text-muted-foreground">Scan with a QR reader</p>
       <p className="text-xs font-mono overflow-hidden text-ellipsis max-w-[80%] text-center">{value}</p>
     </div>
   );
