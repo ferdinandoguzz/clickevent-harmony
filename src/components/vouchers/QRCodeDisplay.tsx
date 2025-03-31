@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface QRCodeDisplayProps {
   value: string;
@@ -7,23 +8,27 @@ interface QRCodeDisplayProps {
 }
 
 export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ value, size = 'md' }) => {
+  const sizePx = {
+    sm: 128,
+    md: 192,
+    lg: 256,
+  };
+  
   const sizeClasses = {
     sm: 'w-32 h-32',
     md: 'w-48 h-48',
     lg: 'w-64 h-64',
   };
   
-  // QR code generated using an API service
-  const qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(value)}`;
-  
   return (
     <div className="flex flex-col items-center">
       <div className="bg-white p-4 rounded-lg shadow">
         <div className={`${sizeClasses[size]} flex items-center justify-center`}>
-          <img 
-            src={qrCodeDataUrl} 
-            alt={`QR Code: ${value}`} 
-            className="w-full h-full"
+          <QRCodeSVG 
+            value={value}
+            size={sizePx[size]}
+            level="H" // High error correction capability
+            includeMargin={true}
           />
         </div>
       </div>

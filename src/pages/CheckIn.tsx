@@ -72,6 +72,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         setPermissionError(
           'Camera access requires a secure connection (HTTPS). Your connection appears to be insecure, which may prevent camera access.'
         );
+        console.warn("Non-secure context detected: QR scanning may not work");
       }
       
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -86,11 +87,21 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play().catch(err => {
+          console.error("Error playing video:", err);
+          throw new Error("Could not play video stream");
+        });
+        
         setScanningStatus('Looking for QR codes...');
+        console.log("Camera started successfully");
         
         // Wait for video to be ready before starting the scanning
         videoRef.current.onloadedmetadata = () => {
+          console.log("Video metadata loaded, dimensions:", 
+            videoRef.current?.videoWidth, 
+            videoRef.current?.videoHeight
+          );
+          
           // Start scanning frames for QR codes
           scanIntervalRef.current = window.setInterval(() => {
             if (!isProcessingFrame) {
@@ -154,19 +165,28 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         // Get image data for processing
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         
+        console.log("Processing frame:", canvas.width, "x", canvas.height);
+        
         // Use jsQR to find QR codes in the image
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: "dontInvert", // Try normal mode only to speed up detection
+          inversionAttempts: "attemptBoth", // Try both normal and inverted
         });
         
         if (code && code.data) {
-          console.log("Found QR code:", code.data);
+          console.log("Found QR code:", code.data, "at", 
+            JSON.stringify({
+              topLeft: code.location.topLeftCorner,
+              topRight: code.location.topRightCorner,
+              bottomLeft: code.location.bottomLeftCorner,
+              bottomRight: code.location.bottomRightCorner
+            })
+          );
           
           // Verify it's a valid QR code with content
-          if (code.data.length > 0) {
+          if (code.data.trim().length > 0) {
             // Avoid multiple detections of the same code in a short time
             if (lastScannedCode !== code.data) {
-              console.log("QR Code detected:", code.data);
+              console.log("New QR Code detected:", code.data);
               
               // Highlight the QR code area
               context.beginPath();
@@ -205,6 +225,8 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
           // No QR code found in this frame
           setScanningStatus('Scanning for QR code...');
         }
+      } else {
+        console.warn("Video dimensions not available yet");
       }
     } catch (error) {
       console.error('Error processing video frame:', error);
@@ -244,6 +266,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
               className="w-full h-full object-cover"
               playsInline 
               muted
+              autoPlay
             />
             <canvas 
               ref={canvasRef} 
