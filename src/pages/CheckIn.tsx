@@ -18,6 +18,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from "@/integrations/supabase/client";
 import QRCodeDialog from '@/components/events/QRCodeDialog';
+import jsQR from 'jsqr';
 
 interface Event {
   id: string;
@@ -43,6 +44,8 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
   const [isScanning, setIsScanning] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [isSecureContext, setIsSecureContext] = useState(true);
+  const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
+  const [scanningStatus, setScanningStatus] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -60,6 +63,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
     try {
       setIsScanning(true);
       setPermissionError(null);
+      setScanningStatus('Starting camera...');
       
       if (!isSecureContext) {
         setPermissionError(
@@ -76,13 +80,14 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
+        setScanningStatus('Looking for QR codes...');
         
         // Wait for video to be ready before starting the scanning
         videoRef.current.onloadedmetadata = () => {
           // Start scanning frames for QR codes
           scanIntervalRef.current = window.setInterval(() => {
             scanQRCode();
-          }, 500); // Scan every 500ms
+          }, 200); // Scan every 200ms
         };
       }
     } catch (err) {
@@ -134,11 +139,42 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
       // Get image data for processing
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       
-      // Here you would process the imageData to find QR codes
-      // Since we don't have a native QR decoder in JS, you'd normally use
-      // a library like jsQR, ZXing, or similar here
+      // Use jsQR to find QR codes in the image
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert", // Try normal mode only to speed up detection
+      });
       
-      // For this implementation, we'll simulate a QR code detection after a certain interval
+      if (code) {
+        // Avoid multiple detections of the same code in a short time
+        if (lastScannedCode !== code.data) {
+          console.log("QR Code detected:", code.data);
+          
+          // Highlight the QR code area
+          context.beginPath();
+          context.moveTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
+          context.lineTo(code.location.topRightCorner.x, code.location.topRightCorner.y);
+          context.lineTo(code.location.bottomRightCorner.x, code.location.bottomRightCorner.y);
+          context.lineTo(code.location.bottomLeftCorner.x, code.location.bottomLeftCorner.y);
+          context.lineTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
+          context.lineWidth = 4;
+          context.strokeStyle = "#FF3B58";
+          context.stroke();
+          
+          setLastScannedCode(code.data);
+          onScan(code.data);
+          
+          // Stop scanning after successful detection
+          stopScanner();
+          
+          toast({
+            title: "QR Code detected",
+            description: "Successfully scanned a QR code.",
+          });
+        }
+      } else {
+        // No QR code found in this frame
+        setScanningStatus('Scanning for QR code...');
+      }
     }
   };
   
@@ -158,35 +194,8 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
     }
     
     setIsScanning(false);
+    setScanningStatus('');
   };
-  
-  // This simulates a QR code detection for demonstration purposes
-  // In a real implementation, this would be called when a QR code is detected by the scanning logic
-  const simulateQRCodeDetection = () => {
-    // For demonstration purposes only - simulate a scan after 3 seconds
-    if (isScanning) {
-      setTimeout(() => {
-        // Generate a fake QR code value for testing
-        const fakeQRValue = `QR-CODE-UNIQUE-${Date.now()}`;
-        onScan(fakeQRValue);
-        
-        // Stop scanner after successful scan
-        stopScanner();
-        
-        toast({
-          title: "QR Code detected",
-          description: "Successfully scanned a QR code.",
-        });
-      }, 3000);
-    }
-  };
-  
-  // Trigger the simulation when scanning starts
-  useEffect(() => {
-    if (isScanning) {
-      simulateQRCodeDetection();
-    }
-  }, [isScanning, onScan]);
 
   return (
     <div className="flex flex-col items-center">
@@ -201,9 +210,15 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
             />
             <canvas 
               ref={canvasRef} 
-              className="absolute top-0 left-0 invisible"
+              className="absolute top-0 left-0 w-full h-full"
+              style={{ opacity: 0.2 }}
             />
             <div className="absolute inset-0 pointer-events-none border-4 border-primary/50 rounded-lg"></div>
+            {scanningStatus && (
+              <div className="absolute bottom-4 left-0 right-0 text-center bg-black/50 text-white py-1 text-sm">
+                {scanningStatus}
+              </div>
+            )}
           </>
         ) : (
           <div className="absolute inset-0 bg-muted flex flex-col items-center justify-center p-4">
