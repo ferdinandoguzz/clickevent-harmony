@@ -48,6 +48,10 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
   const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
   const [scanningStatus, setScanningStatus] = useState<string>('');
   const [isProcessingFrame, setIsProcessingFrame] = useState(false);
+  const [detectionBox, setDetectionBox] = useState<{visible: boolean, coordinates: any}>({
+    visible: false,
+    coordinates: null
+  });
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -67,6 +71,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
       setPermissionError(null);
       setScanningStatus('Starting camera...');
       setLastScannedCode(null);
+      setDetectionBox({visible: false, coordinates: null});
       
       if (!isSecureContext) {
         setPermissionError(
@@ -75,18 +80,48 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         console.warn("Non-secure context detected: QR scanning may not work");
       }
       
-      const stream = await navigator.mediaDevices.getUserMedia({
+      console.log("Requesting camera access...");
+      
+      const constraints = {
         video: { 
           facingMode: "environment",
           width: { ideal: 1280 },
-          height: { ideal: 720 }
+          height: { ideal: 720 },
+          // Specifically request a better camera resolution and framerate for QR scanning
+          frameRate: { ideal: 30 }
         }
-      });
+      };
+      
+      console.log("Camera constraints:", JSON.stringify(constraints));
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        
+        console.log("Setting up video element...");
+        
+        // Make sure autofocus is enabled for better scanning
+        const tracks = stream.getVideoTracks();
+        if (tracks.length > 0) {
+          const capabilities = tracks[0].getCapabilities();
+          console.log("Camera capabilities:", JSON.stringify(capabilities));
+          
+          // Try to set focus mode to continuous-picture if available
+          if (capabilities.focusMode && capabilities.focusMode.includes('continuous-picture')) {
+            try {
+              await tracks[0].applyConstraints({ 
+                advanced: [{ focusMode: "continuous-picture" }]
+              });
+              console.log("Applied continuous focus mode");
+            } catch (e) {
+              console.warn("Could not set focus mode:", e);
+            }
+          }
+        }
+        
         await videoRef.current.play().catch(err => {
           console.error("Error playing video:", err);
           throw new Error("Could not play video stream");
@@ -102,12 +137,12 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
             videoRef.current?.videoHeight
           );
           
-          // Start scanning frames for QR codes
+          // Start scanning frames for QR codes - use shorter interval for more frequent scans
           scanIntervalRef.current = window.setInterval(() => {
             if (!isProcessingFrame) {
               scanQRCode();
             }
-          }, 200); // Scan every 200ms
+          }, 150); // Scan more frequently (150ms instead of 200ms)
         };
       }
     } catch (err) {
@@ -144,7 +179,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
     
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { willReadFrequently: true }); // Optimize for frequent reads
     
     if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) return;
     
@@ -153,8 +188,12 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
     try {
       // Set canvas dimensions to match video
       if (video.videoWidth && video.videoHeight) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        // Only update canvas dimensions if they've changed
+        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          console.log("Canvas dimensions updated to match video:", canvas.width, "x", canvas.height);
+        }
         
         // Clear previous drawings
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -165,22 +204,16 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         // Get image data for processing
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         
-        console.log("Processing frame:", canvas.width, "x", canvas.height);
-        
         // Use jsQR to find QR codes in the image
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: "attemptBoth", // Try both normal and inverted
         });
         
         if (code && code.data) {
-          console.log("Found QR code:", code.data, "at", 
-            JSON.stringify({
-              topLeft: code.location.topLeftCorner,
-              topRight: code.location.topRightCorner,
-              bottomLeft: code.location.bottomLeftCorner,
-              bottomRight: code.location.bottomRightCorner
-            })
-          );
+          console.log("Found QR code:", code.data);
+          
+          // Draw QR code detection box
+          drawDetectionBox(context, code.location);
           
           // Verify it's a valid QR code with content
           if (code.data.trim().length > 0) {
@@ -188,24 +221,8 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
             if (lastScannedCode !== code.data) {
               console.log("New QR Code detected:", code.data);
               
-              // Highlight the QR code area
-              context.beginPath();
-              context.moveTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
-              context.lineTo(code.location.topRightCorner.x, code.location.topRightCorner.y);
-              context.lineTo(code.location.bottomRightCorner.x, code.location.bottomRightCorner.y);
-              context.lineTo(code.location.bottomLeftCorner.x, code.location.bottomLeftCorner.y);
-              context.lineTo(code.location.topLeftCorner.x, code.location.topLeftCorner.y);
-              context.lineWidth = 4;
-              context.strokeStyle = "#FF3B58";
-              context.stroke();
-              
               setLastScannedCode(code.data);
               setScanningStatus('QR code detected!');
-              
-              // Provide visual feedback - draw rectangle around the QR code
-              context.strokeStyle = '#00FF00';
-              context.lineWidth = 5;
-              context.stroke();
               
               // Stop scanning after successful detection
               stopScanner();
@@ -217,11 +234,19 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
                 title: "QR Code detected",
                 description: "Successfully scanned a QR code.",
               });
+            } else {
+              // Even for same code, update the detection box
+              setDetectionBox({
+                visible: true,
+                coordinates: code.location
+              });
             }
           } else {
             setScanningStatus('Invalid QR code detected. Please try again.');
           }
         } else {
+          // Clear the detection box if no code found
+          setDetectionBox({visible: false, coordinates: null});
           // No QR code found in this frame
           setScanningStatus('Scanning for QR code...');
         }
@@ -234,6 +259,34 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
     } finally {
       setIsProcessingFrame(false);
     }
+  };
+
+  // Function to draw detection box
+  const drawDetectionBox = (context: CanvasRenderingContext2D, location: any) => {
+    // Save current detection box for rendering
+    setDetectionBox({
+      visible: true,
+      coordinates: location
+    });
+    
+    // Draw directly on the canvas for immediate visual feedback
+    context.beginPath();
+    context.moveTo(location.topLeftCorner.x, location.topLeftCorner.y);
+    context.lineTo(location.topRightCorner.x, location.topRightCorner.y);
+    context.lineTo(location.bottomRightCorner.x, location.bottomRightCorner.y);
+    context.lineTo(location.bottomLeftCorner.x, location.bottomLeftCorner.y);
+    context.lineTo(location.topLeftCorner.x, location.topLeftCorner.y);
+    context.lineWidth = 6;
+    context.strokeStyle = "#00FF00";
+    context.stroke();
+    
+    // Add markers at the corners for better visibility
+    const cornerSize = 10;
+    context.fillStyle = "#FF3B58";
+    context.fillRect(location.topLeftCorner.x - cornerSize/2, location.topLeftCorner.y - cornerSize/2, cornerSize, cornerSize);
+    context.fillRect(location.topRightCorner.x - cornerSize/2, location.topRightCorner.y - cornerSize/2, cornerSize, cornerSize);
+    context.fillRect(location.bottomLeftCorner.x - cornerSize/2, location.bottomLeftCorner.y - cornerSize/2, cornerSize, cornerSize);
+    context.fillRect(location.bottomRightCorner.x - cornerSize/2, location.bottomRightCorner.y - cornerSize/2, cornerSize, cornerSize);
   };
   
   const stopScanner = () => {
@@ -315,6 +368,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         <Button 
           onClick={isScanning ? stopScanner : startScanner} 
           className="w-full"
+          variant={isScanning ? "secondary" : "default"}
         >
           {isScanning ? (
             <>
@@ -330,8 +384,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         </Button>
         
         <p className="text-xs text-muted-foreground text-center">
-          Please ensure your browser has camera permissions enabled.
-          If scanning doesn't work, you can manually search for attendees in the list.
+          Hold the QR code steady in view. For best results, ensure good lighting and avoid glare on the QR code.
         </p>
       </div>
     </div>

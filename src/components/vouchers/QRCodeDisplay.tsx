@@ -5,9 +5,16 @@ import { QRCodeSVG } from 'qrcode.react';
 interface QRCodeDisplayProps {
   value: string;
   size?: 'sm' | 'md' | 'lg';
+  backgroundColor?: string;
+  foregroundColor?: string;
 }
 
-export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ value, size = 'md' }) => {
+export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ 
+  value, 
+  size = 'md',
+  backgroundColor = "#FFFFFF",
+  foregroundColor = "#000000"
+}) => {
   const sizePx = {
     sm: 128,
     md: 192,
@@ -29,6 +36,8 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ value, size = 'md'
             size={sizePx[size]}
             level="H" // High error correction capability
             includeMargin={true}
+            bgColor={backgroundColor}
+            fgColor={foregroundColor}
           />
         </div>
       </div>
