@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { QrCodeIcon, UserCheck, Check, Search, Camera, RefreshCcw, User, Mail, Phone, CalendarCheck, Clock, MoreVertical, Download, Trash2, Send, AlertTriangle, CameraOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from "@/integrations/supabase/client";
-import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
+import QRCodeDialog from '@/components/events/QRCodeDialog';
 
 interface Event {
   id: string;
@@ -136,14 +135,10 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       
       // Here you would process the imageData to find QR codes
-      // Since we don't have a native QR decoder in JS, we'd normally need to use
-      // a library like jsQR, ZXing, or similar here.
+      // Since we don't have a native QR decoder in JS, you'd normally use
+      // a library like jsQR, ZXing, or similar here
       
-      // For demonstration, let's pretend we found a QR code with a simulated detection
-      // In a real implementation, you would use a library to decode the QR code from imageData
-      
-      // For this example implementation, we'll use a fixed interval to simulate detection
-      // and then stop scanning - in a real app, you'd continue scanning until a valid QR is found
+      // For this implementation, we'll simulate a QR code detection after a certain interval
     }
   };
   
@@ -264,20 +259,6 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
           If scanning doesn't work, you can manually search for attendees in the list.
         </p>
       </div>
-    </div>
-  );
-};
-
-const QRCodeDisplay: React.FC<{ value: string }> = ({ value }) => {
-  return (
-    <div className="flex flex-col items-center">
-      <div className="bg-white p-4 rounded-lg shadow">
-        <div className="w-48 h-48 flex items-center justify-center border-2 border-dashed border-muted p-4">
-          <QrCodeIcon className="w-full h-full text-primary" />
-          <span className="sr-only">QR Code: {value}</span>
-        </div>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">Scan with QR code reader</p>
     </div>
   );
 };
@@ -847,40 +828,13 @@ const CheckIn: React.FC = () => {
         </div>
       </div>
 
-      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Attendee QR Code</DialogTitle>
-            <DialogDescription>
-              {selectedQrCodeAttendee?.name} - {selectedQrCodeAttendee?.email}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex flex-col items-center justify-center p-4">
-            {selectedQrCodeAttendee && (
-              <QRCodeDisplay value={selectedQrCodeAttendee.qrCode} />
-            )}
-          </div>
-          
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              className="sm:flex-1"
-              onClick={() => selectedQrCodeAttendee && handleSendQRCode(selectedQrCodeAttendee)}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Email to Attendee
-            </Button>
-            <Button
-              className="sm:flex-1"
-              onClick={() => selectedQrCodeAttendee && handleDownloadQR(selectedQrCodeAttendee)}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download QR Code
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <QRCodeDialog 
+        open={qrDialogOpen} 
+        onOpenChange={setQrDialogOpen} 
+        attendee={selectedQrCodeAttendee} 
+        onSendInvitation={handleSendQRCode}
+        onDownloadQR={handleDownloadQR}
+      />
     </div>
   );
 };
