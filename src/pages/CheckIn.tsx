@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { QrCodeIcon, UserCheck, Check, Search, Camera, RefreshCcw, User, Mail, Phone, CalendarCheck, Clock, MoreVertical, Download, Trash2, Send } from 'lucide-react';
+import { QrCodeIcon, UserCheck, Check, Search, Camera, RefreshCcw, User, Mail, Phone, CalendarCheck, Clock, MoreVertical, Download, Trash2, Send, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +18,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from "@/integrations/supabase/client";
 import { Html5Qrcode } from 'html5-qrcode';
+import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
 
 interface Event {
   id: string;
@@ -43,10 +43,13 @@ interface Attendee {
 const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [isSecureContext, setIsSecureContext] = useState(true);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = "html5-qr-code-scanner";
   
   useEffect(() => {
+    setIsSecureContext(window.isSecureContext);
+    
     return () => {
       if (scannerRef.current && scannerRef.current.isScanning) {
         scannerRef.current.stop().catch(err => console.error('Error stopping scanner:', err));
@@ -58,6 +61,12 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
     try {
       setIsScanning(true);
       setPermissionError(null);
+      
+      if (!isSecureContext) {
+        setPermissionError(
+          'Camera access requires a secure connection (HTTPS). Your connection appears to be insecure, which may prevent camera access.'
+        );
+      }
       
       if (!scannerRef.current) {
         scannerRef.current = new Html5Qrcode(scannerContainerId);
@@ -86,6 +95,14 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         setPermissionError('Camera permission was denied. Please enable camera access in your browser settings and try again.');
       } else if (errorMessage.includes('NotFoundError')) {
         setPermissionError('No camera found on your device.');
+      } else if (errorMessage.includes('NotAllowedError')) {
+        setPermissionError('Camera access was blocked. Please check your browser permissions and allow camera access.');
+      } else if (errorMessage.includes('NotReadableError')) {
+        setPermissionError('The camera is already in use by another application. Please close other applications using the camera.');
+      } else if (errorMessage.includes('OverconstrainedError')) {
+        setPermissionError('The requested camera does not exist or is not available.');
+      } else if (errorMessage.includes('AbortError')) {
+        setPermissionError('Camera access was aborted. Please try again.');
       } else {
         setPermissionError(`Could not access the camera: ${errorMessage}`);
       }
@@ -125,6 +142,16 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         )}
       </div>
       
+      {!isSecureContext && !permissionError && (
+        <Alert variant="warning" className="mb-4 max-w-md">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Insecure Connection</AlertTitle>
+          <AlertDescription>
+            Camera access requires a secure connection (HTTPS). Your connection is not secure, which may prevent camera access.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {permissionError && (
         <Alert variant="destructive" className="mb-4 max-w-md">
           <AlertTitle>Camera Error</AlertTitle>
@@ -132,22 +159,29 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
         </Alert>
       )}
       
-      <Button 
-        onClick={isScanning ? stopScanner : startScanner} 
-        className="w-full max-w-md"
-      >
-        {isScanning ? (
-          <>
-            <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-            Stop Scanning
-          </>
-        ) : (
-          <>
-            <QrCodeIcon className="mr-2 h-4 w-4" />
-            Start Scanning
-          </>
-        )}
-      </Button>
+      <div className="max-w-md space-y-2 w-full">
+        <Button 
+          onClick={isScanning ? stopScanner : startScanner} 
+          className="w-full"
+        >
+          {isScanning ? (
+            <>
+              <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+              Stop Scanning
+            </>
+          ) : (
+            <>
+              <QrCodeIcon className="mr-2 h-4 w-4" />
+              Start Scanning
+            </>
+          )}
+        </Button>
+        
+        <p className="text-xs text-muted-foreground text-center">
+          Please ensure your browser has camera permissions enabled.
+          If scanning doesn't work, you can manually search for attendees in the list.
+        </p>
+      </div>
     </div>
   );
 };
