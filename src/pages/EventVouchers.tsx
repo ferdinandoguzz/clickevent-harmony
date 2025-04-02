@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PlusCircle, ArrowLeft, Download, QrCode, Ticket, ShoppingBag, CircleDollarSign, Check, X, Edit, Search, Info, AlertCircle } from 'lucide-react';
@@ -14,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockEvents, mockAttendees, mockVouchers } from '@/data/mockData';
+import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
 
 // Import our new download utility
 import { downloadQRCode } from '@/utils/downloadUtils';
