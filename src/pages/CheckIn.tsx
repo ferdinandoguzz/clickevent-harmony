@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { QrCodeIcon, UserCheck, Check, Search, Camera, RefreshCcw, User, Mail, Phone, CalendarCheck, Clock, MoreVertical, Download, Trash2, Send, AlertTriangle, CameraOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from "@/integrations/supabase/client";
 import QRCodeDialog from '@/components/events/QRCodeDialog';
-import jsQR from 'jsqr';
+import jsQR from 'jsQR';
 
 interface Event {
   id: string;
@@ -109,8 +108,15 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
           const capabilities = tracks[0].getCapabilities();
           console.log("Camera capabilities:", JSON.stringify(capabilities));
           
+          // Using type assertion to handle focusMode which might not be in standard TypeScript types
+          type ExtendedCapabilities = MediaTrackCapabilities & {
+            focusMode?: string[];
+          };
+          
+          const extendedCapabilities = capabilities as ExtendedCapabilities;
+          
           // Try to set focus mode to continuous-picture if available
-          if (capabilities.focusMode && capabilities.focusMode.includes('continuous-picture')) {
+          if (extendedCapabilities.focusMode && extendedCapabilities.focusMode.includes('continuous-picture')) {
             try {
               await tracks[0].applyConstraints({ 
                 advanced: [{ focusMode: "continuous-picture" } as any]
@@ -882,89 +888,3 @@ const CheckIn: React.FC = () => {
                                 second: '2-digit'
                               })
                             ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end items-center gap-2">
-                              {!attendee.checkedIn && (
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() => handleCheckIn(attendee.id)}
-                                  disabled={isCheckingIn}
-                                >
-                                  <UserCheck className="h-4 w-4" />
-                                  <span className="sr-only md:not-sr-only md:ml-2">Check In</span>
-                                </Button>
-                              )}
-                              
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="icon">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleViewQR(attendee)}>
-                                    <QrCodeIcon className="mr-2 h-4 w-4" />
-                                    View QR Code
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleSendQRCode(attendee)}>
-                                    <Send className="mr-2 h-4 w-4" />
-                                    Send QR Code by Email
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleDownloadQR(attendee)}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Download QR Code
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
-                                    onClick={() => handleDeleteAttendee(attendee.id)}
-                                    className="text-destructive focus:text-destructive"
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Attendee
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-10">
-                  <UserCheck className="h-10 w-10 text-muted-foreground/60 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-1">No attendees found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {searchQuery 
-                      ? 'No attendees match your search criteria.' 
-                      : 'There are no attendees registered for this event yet.'}
-                  </p>
-                  {searchQuery && (
-                    <Button variant="outline" onClick={() => setSearchQuery('')}>
-                      Clear search
-                    </Button>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-
-      <QRCodeDialog 
-        open={qrDialogOpen} 
-        onOpenChange={setQrDialogOpen} 
-        attendee={selectedQrCodeAttendee} 
-        onSendInvitation={handleSendQRCode}
-        onDownloadQR={handleDownloadQR}
-      />
-    </div>
-  );
-};
-
-export default CheckIn;
