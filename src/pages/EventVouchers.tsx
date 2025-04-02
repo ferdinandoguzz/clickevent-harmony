@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PlusCircle, ArrowLeft, Download, QrCode, Ticket, ShoppingBag, CircleDollarSign, Check, X, Edit, Search, Info, AlertCircle } from 'lucide-react';
@@ -15,6 +14,9 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockEvents, mockAttendees, mockVouchers } from '@/data/mockData';
+
+// Import our new download utility
+import { downloadQRCode } from '@/utils/downloadUtils';
 
 interface VoucherPackageContent {
   type: 'drink' | 'food';
@@ -64,6 +66,8 @@ const EventVouchers: React.FC = () => {
     price: 0,
     contents: [{ type: 'drink', quantity: 1 }]
   });
+  const [selectedAttendee, setSelectedAttendee] = useState<{ id: string; name: string; email: string; qrCode: string; } | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
 
   useEffect(() => {
     // Load event data
@@ -257,6 +261,36 @@ const EventVouchers: React.FC = () => {
     });
   };
 
+  const handleViewQR = (voucher: Voucher) => {
+    // Find attendee for this voucher
+    const attendee = mockAttendees.find(a => a.id === voucher.attendeeId);
+    
+    if (attendee) {
+      setSelectedAttendee({
+        id: attendee.id,
+        name: attendee.name,
+        email: attendee.email,
+        qrCode: voucher.qrCode
+      });
+      setQrDialogOpen(true);
+    }
+  };
+
+  const handleDownloadQR = (attendee: { qrCode: string; name?: string }) => {
+    // We need to get the SVG element that renders the QR code
+    // Since the QR code is rendered in a dialog, we need to select it from the DOM
+    // This is not ideal, but it works for now
+    const qrCodeElement = document.querySelector('.QRCodeSVG') as SVGSVGElement;
+    
+    // Use our utility function to download the QR code
+    downloadQRCode(qrCodeElement, `voucher-${attendee.name || 'code'}`);
+    
+    toast({
+      title: "QR Code downloaded",
+      description: `QR Code has been downloaded successfully.`
+    });
+  };
+
   if (!event) {
     return <div className="p-8 text-center">Loading event details...</div>;
   }
@@ -425,7 +459,7 @@ const EventVouchers: React.FC = () => {
                             <Button
                               variant="outline"
                               size="icon"
-                              onClick={() => {/* View QR code */}}
+                              onClick={() => handleViewQR(voucher)}
                             >
                               <QrCode className="h-4 w-4" />
                               <span className="sr-only">View QR Code</span>
@@ -574,6 +608,41 @@ const EventVouchers: React.FC = () => {
             </Button>
             <Button onClick={handleSavePackage}>
               {editingPackage ? 'Update Package' : 'Create Package'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={qrDialogOpen} onOpenChange={() => setQrDialogOpen(false)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Voucher QR Code</DialogTitle>
+            <DialogDescription>
+              {selectedAttendee?.name} - {selectedAttendee?.email}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center justify-center p-4">
+            {selectedAttendee && (
+              <>
+                <QRCodeDisplay value={selectedAttendee.qrCode} size="md" />
+                <Button
+                  className="mt-4"
+                  onClick={() => handleDownloadQR(selectedAttendee)}
+                >
+                  Download QR Code
+                </Button>
+              </>
+            )}
+          </div>
+          
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              className="sm:flex-1"
+              onClick={() => setQrDialogOpen(false)}
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

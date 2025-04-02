@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface QRCodeDisplayProps {
@@ -15,6 +15,8 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   backgroundColor = "#FFFFFF",
   foregroundColor = "#000000"
 }) => {
+  const qrRef = useRef<SVGSVGElement>(null);
+  
   const sizePx = {
     sm: 128,
     md: 192,
@@ -32,6 +34,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
       <div className="bg-white p-4 rounded-lg shadow">
         <div className={`${sizeClasses[size]} flex items-center justify-center`}>
           <QRCodeSVG 
+            ref={qrRef}
             value={value}
             size={sizePx[size]}
             level="H" // High error correction capability
