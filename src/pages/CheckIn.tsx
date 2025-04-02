@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { QrCodeIcon, UserCheck, Check, Search, Camera, RefreshCcw, User, Mail, Phone, CalendarCheck, Clock, MoreVertical, Download, Trash2, Send, AlertTriangle, CameraOff } from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
+import { QrCodeIcon, UserCheck, Search, MoreVertical, Download, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +15,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from "@/integrations/supabase/client";
 import QRCodeDialog from '@/components/events/QRCodeDialog';
-import jsQR from 'jsQR';
+import QRScanner from '@/components/events/QRCodeScanner';
+import AttendeeInfo from '@/components/events/AttendeeInfo';
 
 interface Event {
   id: string;
@@ -39,14 +39,6 @@ interface Attendee {
   checkinTime: string | null;
   qrCode: string;
 }
-
-const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) => {
-  // ... (same implementation as before)
-};
-
-const AttendeeInfo: React.FC<{ attendee: Attendee; onCheckIn: () => void }> = ({ attendee, onCheckIn }) => {
-  // ... (same implementation as before)
-};
 
 const CheckIn: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<string>('1');
@@ -241,10 +233,6 @@ const CheckIn: React.FC = () => {
 
   const handleEventChange = (eventId: string) => {
     setSelectedEvent(eventId);
-    setScannedAttendee(null);
-  };
-
-  const clearScannedAttendee = () => {
     setScannedAttendee(null);
   };
 
