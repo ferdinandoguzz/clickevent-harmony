@@ -113,7 +113,7 @@ const QRScanner: React.FC<{ onScan: (qrCode: string) => void }> = ({ onScan }) =
           if (capabilities.focusMode && capabilities.focusMode.includes('continuous-picture')) {
             try {
               await tracks[0].applyConstraints({ 
-                advanced: [{ focusMode: "continuous-picture" }]
+                advanced: [{ focusMode: "continuous-picture" } as any]
               });
               console.log("Applied continuous focus mode");
             } catch (e) {
