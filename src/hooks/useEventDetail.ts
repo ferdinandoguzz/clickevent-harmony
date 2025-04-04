@@ -1,8 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { mockEvents, mockAttendees } from '@/data/mockData';
 import { Event, Attendee, FormField } from '@/components/events/types';
+import { sendInvitationEmail } from '@/utils/emailUtils';
+import { downloadQRCode } from '@/utils/downloadUtils';
 
 export const useEventDetail = (eventId: string | undefined) => {
   const [event, setEvent] = useState<Event | null>(null);
@@ -77,6 +78,9 @@ export const useEventDetail = (eventId: string | undefined) => {
   };
 
   const handleDownloadQR = (attendee: Attendee) => {
+    const qrElement = document.querySelector(`[data-attendee-id="${attendee.id}"] svg`) as SVGSVGElement;
+    downloadQRCode(qrElement, `attendee-qr-${attendee.id}`);
+    
     toast({
       title: "QR Code downloaded",
       description: `QR Code for ${attendee.name} has been downloaded successfully.`
@@ -84,9 +88,30 @@ export const useEventDetail = (eventId: string | undefined) => {
   };
 
   const handleSendInvitation = (attendee: Attendee) => {
-    toast({
-      title: "Invitation sent",
-      description: `An invitation has been sent to ${attendee.email}.`
+    if (!event) return;
+    
+    const formattedDate = event.startDate ? formatDate(new Date(event.startDate)) : '';
+    
+    sendInvitationEmail(
+      attendee.email,
+      attendee.name,
+      attendee.qrCode,
+      event.name,
+      formattedDate
+    )
+    .then(() => {
+      toast({
+        title: "Invitation sent",
+        description: `An invitation has been sent to ${attendee.email}.`
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to send invitation:', error);
+      toast({
+        title: "Error sending invitation",
+        description: "There was a problem sending the invitation email.",
+        variant: "destructive"
+      });
     });
   };
 

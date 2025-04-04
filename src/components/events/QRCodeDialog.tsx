@@ -4,6 +4,7 @@ import { Mail, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
+import { downloadQRCode } from '@/utils/downloadUtils';
 
 interface Attendee {
   id: string;
@@ -39,7 +40,12 @@ const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
         
         <div className="flex flex-col items-center justify-center p-4">
           {attendee && (
-            <QRCodeDisplay value={attendee.qrCode} size="md" />
+            <QRCodeDisplay
+              value={attendee.qrCode}
+              size="md"
+              showDownload={false}
+              downloadFileName={`attendee-qr-${attendee.id}`}
+            />
           )}
         </div>
         

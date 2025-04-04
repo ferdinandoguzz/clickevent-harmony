@@ -17,6 +17,7 @@ import VoucherPurchase from '@/components/vouchers/VoucherPurchase';
 import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
 import { Event, EventVoucher, PurchasedVoucher } from '@/types/event';
 import { mockEvents, mockVouchers } from '@/data/mockData';
+import { sendRegistrationEmail, sendVoucherEmail } from '@/utils/emailUtils';
 
 // Registration form schema
 const registrationFormSchema = z.object({
@@ -166,18 +167,33 @@ const EventLanding: React.FC = () => {
     // Show the registration success
     setRegistrationSuccess(true);
     
-    // Send confirmation email (simulated)
+    // Send confirmation email with QR code
     sendConfirmationEmail(newAttendee);
   };
 
   const sendConfirmationEmail = (attendee: Attendee) => {
-    // In a real application, we would send the email via a service like SendGrid, Mailchimp, etc.
-    console.log(`Email of confirmation sent to ${attendee.email} with QR code ${attendee.qrCode}`);
+    const fullName = `${attendee.firstName} ${attendee.lastName}`;
     
-    // Show toast of confirmation
-    toast({
-      title: "Email inviata!",
-      description: `Una email di conferma è stata inviata a ${attendee.email}`,
+    // Send email using our new utility
+    sendRegistrationEmail(
+      attendee.email,
+      fullName,
+      attendee.qrCode,
+      event?.name || 'Event'
+    )
+    .then(() => {
+      toast({
+        title: "Email inviata!",
+        description: `Una email di conferma è stata inviata a ${attendee.email}`,
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to send confirmation email:', error);
+      toast({
+        title: "Errore nell'invio dell'email",
+        description: "Si è verificato un errore nell'invio dell'email di conferma",
+        variant: "destructive"
+      });
     });
   };
 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CircleDollarSign, ShoppingCart, Coffee, Pizza, PlusCircle, MinusCircle, Check, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from '@/hooks/use-toast';
 import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
 import { EventVoucher } from '@/types/event';
+import { sendVoucherEmail } from '@/utils/emailUtils';
 
 interface VoucherPackageContent {
   type: 'drink' | 'food';
@@ -71,6 +71,18 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
         onPurchaseComplete();
       }
       
+      // Send voucher email with QR code
+      sendVoucherEmail(
+        "user@example.com", // In a real app, we would get this from user data
+        "Customer", // In a real app, we would get this from user data
+        newVoucherCode,
+        voucher.name,
+        voucher.description,
+        "Event" // In a real app, we would get the event name
+      ).catch(error => {
+        console.error("Failed to send voucher email:", error);
+      });
+      
       // In a real app, you would save this to the database
       console.log('Sending email to', attendeeId, 'with QR code:', newVoucherCode);
     }, 1500);
@@ -111,6 +123,18 @@ const VoucherPurchase: React.FC<VoucherPurchaseProps> = ({
       toast({
         title: "Acquisto completato!",
         description: "Il tuo voucher è stato generato con successo."
+      });
+      
+      // Send voucher email with QR code
+      sendVoucherEmail(
+        "user@example.com", // In a real app, we would get this from user data
+        "Customer", // In a real app, we would get this from user data
+        newVoucherCode,
+        selectedPackage.name,
+        selectedPackage.description,
+        "Event" // In a real app, we would get the event name
+      ).catch(error => {
+        console.error("Failed to send voucher email:", error);
       });
       
       // In a real app, you would save this to the database
