@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -8,7 +7,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Initialize Resend with API key from environment variables
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+if (!resendApiKey) {
+  console.error("RESEND_API_KEY environment variable is not set");
+}
+
+const resend = new Resend(resendApiKey);
 
 interface EmailRequest {
   to: string;
@@ -23,15 +28,24 @@ interface EmailRequest {
 }
 
 serve(async (req) => {
+  console.log(`Received ${req.method} request to send-email function`);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS request (CORS preflight)");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { to, subject, name, qrCodeValue, templateType, eventName, eventDate, voucherName, voucherDescription } = await req.json() as EmailRequest;
+    console.log("Parsing request body");
+    const requestData = await req.json();
+    const { to, subject, name, qrCodeValue, templateType, eventName, eventDate, voucherName, voucherDescription } = requestData as EmailRequest;
+    
+    // Log email request parameters (omitting sensitive data)
+    console.log(`Email request: templateType=${templateType}, to=${to.substring(0, 3)}...`);
     
     if (!to || !subject || !templateType) {
+      console.error("Missing required fields in email request");
       return new Response(
         JSON.stringify({
           error: "Missing required fields: to, subject, and templateType are required",
@@ -46,6 +60,7 @@ serve(async (req) => {
     let htmlContent = "";
 
     // Generate appropriate email template based on templateType
+    console.log(`Generating ${templateType} email template`);
     switch (templateType) {
       case "registration":
         htmlContent = generateRegistrationEmail(name || "Attendee", qrCodeValue || "", eventName || "");
@@ -57,6 +72,7 @@ serve(async (req) => {
         htmlContent = generateVoucherEmail(name || "Attendee", qrCodeValue || "", voucherName || "", voucherDescription || "", eventName || "");
         break;
       default:
+        console.error(`Invalid template type: ${templateType}`);
         return new Response(
           JSON.stringify({ error: "Invalid template type" }),
           {
@@ -66,6 +82,7 @@ serve(async (req) => {
         );
     }
 
+    console.log("Sending email via Resend API");
     const data = await resend.emails.send({
       from: "Resend Sandbox <onboarding@resend.dev>",
       to: [to],
@@ -73,16 +90,37 @@ serve(async (req) => {
       html: htmlContent,
     });
 
-    console.log("Email sent successfully:", data);
+    console.log("Email sent successfully:", JSON.stringify(data));
 
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    // Enhanced error logging
     console.error("Error sending email:", error);
+    console.error("Error details:", error instanceof Error ? error.stack : "Unknown error structure");
+    
+    let errorMessage = "Unknown error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      
+      // Check for common Resend API errors
+      if (errorMessage.includes("rate limit") || errorMessage.includes("429")) {
+        errorMessage = "Rate limit exceeded. Please try again later.";
+      } else if (errorMessage.includes("authentication") || errorMessage.includes("401")) {
+        errorMessage = "Authentication failed. Please check your Resend API key.";
+      } else if (errorMessage.includes("sandbox") || errorMessage.includes("unverified")) {
+        errorMessage = "Email sending failed. If using Resend sandbox, make sure your recipient is verified or your domain is configured.";
+      }
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID()
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
