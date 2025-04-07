@@ -1,16 +1,18 @@
 
 import React from 'react';
-import { Mail, Download } from 'lucide-react';
+import { Mail, Download, Share2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { QRCodeDisplay } from '@/components/vouchers/QRCodeDisplay';
-import { downloadQRCode } from '@/utils/downloadUtils';
+import { sendInvitationEmail } from '@/utils/emailUtils';
+import { toast } from '@/hooks/use-toast';
 
 interface Attendee {
   id: string;
   name: string;
   email: string;
   qrCode: string;
+  eventId?: string;
 }
 
 interface QRCodeDialogProps {
@@ -28,6 +30,38 @@ const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
   onSendInvitation,
   onDownloadQR
 }) => {
+  const handleShareQR = async () => {
+    if (!attendee) return;
+    
+    if (!navigator.share) {
+      toast({
+        title: "Sharing not supported",
+        description: "Your browser doesn't support the Web Share API.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      await navigator.share({
+        title: 'Attendee QR Code',
+        text: `QR Code for ${attendee.name}: ${attendee.qrCode}`
+      });
+      
+      toast({
+        title: "QR Code shared",
+        description: "The QR code has been shared successfully."
+      });
+    } catch (error) {
+      console.error('Error sharing QR code:', error);
+      toast({
+        title: "Sharing failed",
+        description: "Could not share the QR code.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -45,6 +79,7 @@ const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
               size="md"
               showDownload={false}
               downloadFileName={`attendee-qr-${attendee.id}`}
+              attendeeId={attendee.id}
             />
           )}
         </div>
@@ -65,6 +100,16 @@ const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
             <Download className="mr-2 h-4 w-4" />
             Download QR Code
           </Button>
+          {navigator.share && (
+            <Button
+              variant="outline"
+              className="sm:flex-1"
+              onClick={handleShareQR}
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              Share QR Code
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

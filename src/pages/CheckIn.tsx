@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from "@/integrations/supabase/client";
 import QRCodeDialog from '@/components/events/QRCodeDialog';
-import QRScanner from '@/components/events/QRCodeScanner';
+import QRCodeUploader from '@/components/events/QRCodeUploader';
 import AttendeeInfo from '@/components/events/AttendeeInfo';
 
 interface Event {
@@ -162,7 +162,7 @@ const CheckIn: React.FC = () => {
     attendee.phone.includes(searchQuery))
   );
 
-  const handleScan = (qrCode: string) => {
+  const handleQRCodeDetected = (qrCode: string) => {
     const attendee = attendees.find(a => a.qrCode === qrCode);
     if (attendee) {
       setScannedAttendee(attendee);
@@ -365,7 +365,7 @@ const CheckIn: React.FC = () => {
             <TabsContent value="scan" className="pt-6">
               <div className="flex flex-col items-center md:flex-row gap-8">
                 <div className="w-full md:w-auto">
-                  <QRScanner onScan={handleScan} />
+                  <QRCodeUploader onDetect={handleQRCodeDetected} />
                 </div>
                 
                 <div className="w-full md:flex-1 flex justify-center">
@@ -379,7 +379,7 @@ const CheckIn: React.FC = () => {
                       <QrCodeIcon className="h-12 w-12 text-muted-foreground mb-2" />
                       <h3 className="text-lg font-medium mb-1">No QR Code Scanned</h3>
                       <p className="text-center text-muted-foreground mb-4">
-                        Scan a QR code to view attendee information and check them in.
+                        Upload a QR code image to view attendee information and check them in.
                       </p>
                       <p className="text-xs text-muted-foreground text-center max-w-xs">
                         You can also search for attendees in the "Attendee List" tab if you need to check someone in manually.
