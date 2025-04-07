@@ -29,6 +29,13 @@ const QRCodeUploader: React.FC<QRCodeUploaderProps> = ({ onDetect }) => {
       }
     };
   }, [cameraStream]);
+
+  // Connect video element to camera stream when stream is available
+  useEffect(() => {
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream, videoRef]);
   
   // Trigger the file input click for uploading an existing image
   const handleUploadButtonClick = () => {
@@ -134,6 +141,11 @@ const QRCodeUploader: React.FC<QRCodeUploaderProps> = ({ onDetect }) => {
   // Initialize camera for direct photo capture
   const startCamera = async () => {
     try {
+      // Stop any existing camera stream
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      
       // Request access to the user's camera
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
@@ -147,10 +159,7 @@ const QRCodeUploader: React.FC<QRCodeUploaderProps> = ({ onDetect }) => {
       setCameraStream(stream);
       setIsCameraActive(true);
       
-      // Connect the stream to the video element
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      // The video element will be connected via the useEffect
       
       toast({
         title: "Camera activated",
@@ -290,7 +299,8 @@ const QRCodeUploader: React.FC<QRCodeUploaderProps> = ({ onDetect }) => {
               <video 
                 ref={videoRef}
                 autoPlay 
-                playsInline 
+                playsInline
+                muted
                 className="w-full aspect-video object-cover rounded-md border border-muted"
               />
               
