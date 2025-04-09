@@ -1,112 +1,159 @@
 
 import { toast } from '@/hooks/use-toast';
 import { PurchasedVoucher } from '@/types/event';
-import { mockPurchasedVouchers, mockAttendees } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
 
-// Simuliamo un DB in memoria con persistenza in localStorage
-let voucherDatabase = (() => {
+export const getVoucherByQrCode = async (qrCode: string): Promise<PurchasedVoucher | undefined> => {
   try {
-    const savedVouchers = localStorage.getItem('vouchers');
-    return savedVouchers ? JSON.parse(savedVouchers) : [...mockPurchasedVouchers];
-  } catch (error) {
-    console.error('Error loading vouchers from localStorage:', error);
-    return [...mockPurchasedVouchers];
-  }
-})();
-
-// Funzione helper per salvare i voucher in localStorage
-const persistVouchers = () => {
-  try {
-    localStorage.setItem('vouchers', JSON.stringify(voucherDatabase));
-    return true;
-  } catch (error) {
-    console.error('Error saving vouchers to localStorage:', error);
-    return false;
-  }
-};
-
-export const getVoucherByQrCode = (qrCode: string): PurchasedVoucher | undefined => {
-  return voucherDatabase.find(v => v.qrCode === qrCode);
-};
-
-export const getVouchersByEventId = (eventId: string): PurchasedVoucher[] => {
-  return voucherDatabase.filter(v => v.eventId === eventId);
-};
-
-export const redeemVoucher = (voucherId: string): Promise<PurchasedVoucher> => {
-  return new Promise((resolve, reject) => {
-    // Simuliamo un ritardo della rete
-    setTimeout(() => {
-      try {
-        const voucherIndex = voucherDatabase.findIndex(v => v.id === voucherId);
-        
-        if (voucherIndex === -1) {
-          reject(new Error('Voucher non trovato'));
-          return;
-        }
-        
-        const voucher = voucherDatabase[voucherIndex];
-        
-        if (voucher.isRedeemed) {
-          reject(new Error(`Il voucher è già stato riscattato il ${new Date(voucher.redemptionTime!).toLocaleString()}`));
-          return;
-        }
-        
-        // Aggiorna il voucher nel nostro DB simulato
-        const updatedVoucher = {
-          ...voucher,
-          isRedeemed: true,
-          redemptionTime: new Date().toISOString()
-        };
-        
-        voucherDatabase[voucherIndex] = updatedVoucher;
-        
-        // Persistenza in localStorage
-        const saved = persistVouchers();
-        if (!saved) {
-          console.warn('Could not save vouchers to localStorage, but operation will continue');
-        }
-        
-        // Log per debugging
-        console.log('Voucher riscattato e salvato:', updatedVoucher);
-        
-        resolve(updatedVoucher);
-      } catch (error) {
-        console.error('Errore durante il riscatto del voucher:', error);
-        reject(new Error('Si è verificato un errore durante il riscatto del voucher'));
-      }
-    }, 800); // Simula il ritardo della rete
-  });
-};
-
-export const getVoucherWithAttendeeInfo = (voucherId: string) => {
-  try {
-    const voucher = voucherDatabase.find(v => v.id === voucherId);
-    if (!voucher) return null;
+    const { data, error } = await supabase
+      .from('purchased_vouchers')
+      .select(`
+        id,
+        event_id,
+        attendee_id,
+        package_id,
+        package_name,
+        purchase_date,
+        price,
+        is_redeemed,
+        redemption_time,
+        qr_code
+      `)
+      .eq('qr_code', qrCode)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching voucher:', error);
+      return undefined;
+    }
     
-    const attendee = mockAttendees.find(a => a.id === voucher.attendeeId);
-    if (!attendee) return null;
+    return data as PurchasedVoucher;
+  } catch (error) {
+    console.error('Error in getVoucherByQrCode:', error);
+    return undefined;
+  }
+};
+
+export const getVouchersByEventId = async (eventId: string): Promise<PurchasedVoucher[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('purchased_vouchers')
+      .select(`
+        id,
+        event_id,
+        attendee_id,
+        package_id,
+        package_name,
+        purchase_date,
+        price,
+        is_redeemed,
+        redemption_time,
+        qr_code
+      `)
+      .eq('event_id', eventId);
+      
+    if (error) {
+      console.error('Error fetching vouchers:', error);
+      return [];
+    }
+    
+    return data as PurchasedVoucher[];
+  } catch (error) {
+    console.error('Error in getVouchersByEventId:', error);
+    return [];
+  }
+};
+
+export const redeemVoucher = async (voucherId: string): Promise<PurchasedVoucher> => {
+  try {
+    // First check if voucher exists and is not already redeemed
+    const { data: existingVoucher, error: fetchError } = await supabase
+      .from('purchased_vouchers')
+      .select('*')
+      .eq('id', voucherId)
+      .single();
+      
+    if (fetchError) {
+      throw new Error('Voucher not found');
+    }
+    
+    if (existingVoucher.is_redeemed) {
+      throw new Error(`Voucher already redeemed on ${new Date(existingVoucher.redemption_time).toLocaleString()}`);
+    }
+    
+    // Update the voucher to mark it as redeemed
+    const now = new Date().toISOString();
+    const { data: updatedVoucher, error: updateError } = await supabase
+      .from('purchased_vouchers')
+      .update({
+        is_redeemed: true,
+        redemption_time: now
+      })
+      .eq('id', voucherId)
+      .select()
+      .single();
+      
+    if (updateError) {
+      throw new Error('Failed to redeem voucher');
+    }
+    
+    return updatedVoucher as PurchasedVoucher;
+  } catch (error) {
+    console.error('Error redeeming voucher:', error);
+    throw error;
+  }
+};
+
+export const getVoucherWithAttendeeInfo = async (voucherId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('purchased_vouchers')
+      .select(`
+        id,
+        package_name,
+        is_redeemed,
+        redemption_time,
+        attendees (
+          name,
+          email
+        )
+      `)
+      .eq('id', voucherId)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching voucher with attendee info:', error);
+      return null;
+    }
     
     return {
-      id: voucher.id,
-      packageName: voucher.packageName,
-      isRedeemed: voucher.isRedeemed,
-      redemptionTime: voucher.redemptionTime,
-      attendeeName: attendee.name,
-      attendeeEmail: attendee.email
+      id: data.id,
+      packageName: data.package_name,
+      isRedeemed: data.is_redeemed,
+      redemptionTime: data.redemption_time,
+      attendeeName: data.attendees.name,
+      attendeeEmail: data.attendees.email
     };
   } catch (error) {
-    console.error('Error retrieving voucher with attendee info:', error);
+    console.error('Error in getVoucherWithAttendeeInfo:', error);
     return null;
   }
 };
 
-// Nuova funzione per ottenere statistiche sui voucher
-export const getVoucherStats = (eventId: string) => {
+export const getVoucherStats = async (eventId: string) => {
   try {
-    const eventVouchers = voucherDatabase.filter(v => v.eventId === eventId);
-    const total = eventVouchers.length;
-    const redeemed = eventVouchers.filter(v => v.isRedeemed).length;
+    const { data, error } = await supabase
+      .from('purchased_vouchers')
+      .select('id, is_redeemed')
+      .eq('event_id', eventId);
+      
+    if (error) {
+      console.error('Error fetching voucher stats:', error);
+      return { total: 0, redeemed: 0, remaining: 0, redemptionRate: 0 };
+    }
+    
+    const total = data.length;
+    const redeemed = data.filter(v => v.is_redeemed).length;
     
     return {
       total,
@@ -120,9 +167,25 @@ export const getVoucherStats = (eventId: string) => {
   }
 };
 
-// Funzione per reimpostare i voucher (utile per demo)
-export const resetVouchers = () => {
-  voucherDatabase = [...mockPurchasedVouchers];
-  persistVouchers();
-  return true;
+// This function would be used in a real system after testing or for demo purposes
+export const resetVouchers = async (eventId: string) => {
+  try {
+    const { error } = await supabase
+      .from('purchased_vouchers')
+      .update({
+        is_redeemed: false,
+        redemption_time: null
+      })
+      .eq('event_id', eventId);
+      
+    if (error) {
+      console.error('Error resetting vouchers:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in resetVouchers:', error);
+    return false;
+  }
 };

@@ -14,6 +14,16 @@ interface User {
   clubId?: string; // Club associated with staff user
 }
 
+interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  club_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -22,7 +32,7 @@ interface AuthContextType {
   logout: () => void;
   role: UserRole;
   createUser: (name: string, email: string, password: string, role: UserRole, clubId?: string) => Promise<User>;
-  getAllUsers: () => User[];
+  getAllUsers: () => Promise<User[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,37 +53,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     // Set up auth state listener FIRST to prevent missing auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
         console.log('Auth state changed:', event, newSession);
         setSession(newSession);
         
         if (newSession) {
-          // Fetch user metadata from profiles or roles table
-          // For now we'll use mock data for demo accounts
-          const email = newSession.user.email;
-          if (email) {
-            let role: UserRole = 'staff';
-            let name = email.split('@')[0];
-            
-            if (email.includes('superadmin')) {
-              role = 'superadmin';
-            } else if (email.includes('admin')) {
-              role = 'admin';
+          // Fetch user profile from our profiles table
+          try {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', newSession.user.id)
+              .single();
+              
+            if (error) {
+              console.error('Error fetching user profile:', error);
+              return;
             }
             
-            const userObj: User = {
-              id: newSession.user.id,
-              name,
-              email,
-              role
-            };
-            
-            setUser(userObj);
+            if (profile) {
+              setUser({
+                id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                role: profile.role as UserRole,
+                clubId: profile.club_id
+              });
+            }
+          } catch (error) {
+            console.error('Error processing profile:', error);
           }
         } else {
           setUser(null);
@@ -82,72 +94,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
       console.log('Existing session:', existingSession);
       setSession(existingSession);
       
       if (existingSession) {
-        // Fetch user metadata from profiles or roles table
-        // For now we'll use mock data for demo accounts
-        const email = existingSession.user.email;
-        if (email) {
-          let role: UserRole = 'staff';
-          let name = email.split('@')[0];
-          
-          if (email.includes('superadmin')) {
-            role = 'superadmin';
-          } else if (email.includes('admin')) {
-            role = 'admin';
+        // Fetch user profile from our profiles table
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', existingSession.user.id)
+            .single();
+            
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            setIsLoading(false);
+            return;
           }
           
-          const userObj: User = {
-            id: existingSession.user.id,
-            name,
-            email,
-            role
-          };
-          
-          setUser(userObj);
+          if (profile) {
+            setUser({
+              id: profile.id,
+              name: profile.name,
+              email: profile.email,
+              role: profile.role as UserRole,
+              clubId: profile.club_id
+            });
+          }
+        } catch (error) {
+          console.error('Error processing profile:', error);
         }
       }
       
       setIsLoading(false);
     });
-    
-    // Load mock users (in a real app, these would come from the database)
-    const savedUsers = localStorage.getItem('clickevent_users');
-    if (savedUsers) {
-      try {
-        setUsers(JSON.parse(savedUsers));
-      } catch (e) {
-        console.error('Error parsing saved users data', e);
-        localStorage.removeItem('clickevent_users');
-      }
-    } else {
-      // Initialize with some default users if none exist
-      const defaultUsers = [
-        {
-          id: 'superadmin-1',
-          name: 'Super Admin',
-          email: 'superadmin@clickevent.com',
-          role: 'superadmin' as UserRole
-        },
-        {
-          id: 'admin-1',
-          name: 'Admin',
-          email: 'admin@clickevent.com',
-          role: 'admin' as UserRole
-        },
-        {
-          id: 'staff-1',
-          name: 'Staff',
-          email: 'staff@clickevent.com',
-          role: 'staff' as UserRole
-        }
-      ];
-      setUsers(defaultUsers);
-      localStorage.setItem('clickevent_users', JSON.stringify(defaultUsers));
-    }
 
     // Clean up subscription on unmount
     return () => {
@@ -205,54 +186,75 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const createUser = async (name: string, email: string, password: string, role: UserRole, clubId?: string): Promise<User> => {
-    // In a real app, we would create the user in Supabase Auth
-    // For now, simulate user creation
-    const { data, error } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
+    try {
+      // Create the user in Supabase Auth with metadata
+      const { data, error } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          name,
+          role,
+          club_id: clubId
+        }
+      });
+      
+      if (error) {
+        console.error('Error creating user:', error);
+        toast({
+          title: 'Error creating user',
+          description: error.message,
+          variant: 'destructive'
+        });
+        throw error;
+      }
+      
+      // The profile should be created automatically via database trigger
+      // But we'll return the user data in the expected format
+      const newUser: User = {
+        id: data.user.id,
         name,
+        email,
         role,
         clubId
-      }
-    });
-    
-    if (error) {
-      console.error('Error creating user:', error);
+      };
+      
       toast({
-        title: 'Error creating user',
-        description: error.message,
-        variant: 'destructive'
+        title: 'User created',
+        description: `${name} has been added successfully as ${role}`,
       });
+      
+      return newUser;
+    } catch (error) {
+      console.error('Error in createUser:', error);
       throw error;
     }
-    
-    // Create a user object and add it to our local users array
-    const newUser: User = {
-      id: data.user.id,
-      name,
-      email,
-      role,
-      clubId
-    };
-    
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    
-    // Save in localStorage for demo purposes
-    localStorage.setItem('clickevent_users', JSON.stringify(updatedUsers));
-    
-    toast({
-      title: 'User created',
-      description: `${name} has been added successfully as ${role}`,
-    });
-    
-    return newUser;
   };
 
-  const getAllUsers = (): User[] => {
-    return users;
+  const getAllUsers = async (): Promise<User[]> => {
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('name');
+        
+      if (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+      }
+      
+      // Map profiles to users format
+      return profiles.map((profile: Profile) => ({
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        role: profile.role,
+        clubId: profile.club_id
+      }));
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      return [];
+    }
   };
 
   return (

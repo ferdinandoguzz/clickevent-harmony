@@ -30,8 +30,8 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { mockClubs } from '@/data/mockData';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -41,14 +41,20 @@ interface User {
   clubId?: string;
 }
 
+interface Club {
+  id: string;
+  name: string;
+}
+
 interface StaffDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (userData: { name: string; email: string; password: string; role: UserRole; clubId?: string }) => void;
   editingUser?: User;
+  clubs: Club[];
 }
 
-const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, editingUser }) => {
+const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, editingUser, clubs }) => {
   const [name, setName] = useState(editingUser?.name || '');
   const [email, setEmail] = useState(editingUser?.email || '');
   const [password, setPassword] = useState('');
@@ -59,7 +65,7 @@ const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, e
     if (editingUser) {
       setName(editingUser.name);
       setEmail(editingUser.email);
-      setPassword(''); // Non possiamo recuperare la password, quindi campo vuoto
+      setPassword(''); // We can't retrieve the password, so empty field
       setRole(editingUser.role);
       setClubId(editingUser.clubId || '');
     } else {
@@ -76,8 +82,8 @@ const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, e
     
     if (role === 'staff' && !clubId) {
       toast({
-        title: 'Club richiesto',
-        description: 'Per gli utenti staff è necessario selezionare un club',
+        title: 'Club required',
+        description: 'Staff users must be assigned to a club',
         variant: 'destructive'
       });
       return;
@@ -99,21 +105,21 @@ const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, e
       <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{editingUser ? 'Modifica Utente' : 'Crea Nuovo Utente'}</DialogTitle>
+            <DialogTitle>{editingUser ? 'Edit User' : 'Create New User'}</DialogTitle>
             <DialogDescription>
               {editingUser 
-                ? 'Modifica le informazioni dell\'utente qui.'
-                : 'Aggiungi un nuovo utente staff o admin qui.'}
+                ? 'Edit user information here.'
+                : 'Add a new staff or admin user here.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Inserisci il nome"
+                placeholder="Enter name"
                 required
               />
             </div>
@@ -124,13 +130,13 @@ const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, e
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@esempio.com"
+                placeholder="email@example.com"
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">
-                Password {editingUser && <span className="text-xs text-muted-foreground">(lascia vuoto per non modificare)</span>}
+                Password {editingUser && <span className="text-xs text-muted-foreground">(leave empty to keep current)</span>}
               </Label>
               <Input
                 id="password"
@@ -142,13 +148,13 @@ const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, e
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="role">Ruolo</Label>
+              <Label htmlFor="role">Role</Label>
               <Select 
                 value={role || 'staff'} 
                 onValueChange={(value) => setRole(value as UserRole)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleziona un ruolo" />
+                  <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
@@ -164,10 +170,10 @@ const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, e
                   onValueChange={setClubId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleziona un club" />
+                    <SelectValue placeholder="Select a club" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockClubs.map(club => (
+                    {clubs.map(club => (
                       <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -177,9 +183,9 @@ const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, e
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Annulla
+              Cancel
             </Button>
-            <Button type="submit">{editingUser ? 'Salva modifiche' : 'Crea utente'}</Button>
+            <Button type="submit">{editingUser ? 'Save changes' : 'Create user'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -193,23 +199,55 @@ const StaffManagement: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
   const [users, setUsers] = useState<User[]>([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Controllo se l'utente è superadmin
+    // Check if user is superadmin
     if (currentUserRole !== 'superadmin') {
       navigate('/unauthorized');
       return;
     }
     
-    // Carica gli utenti
-    setUsers(getAllUsers());
+    // Load users and clubs
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Load users
+        const usersList = await getAllUsers();
+        setUsers(usersList);
+        
+        // Load clubs
+        const { data: clubsList, error } = await supabase
+          .from('clubs')
+          .select('id, name')
+          .order('name');
+          
+        if (error) {
+          console.error('Error loading clubs:', error);
+          toast({
+            title: 'Error',
+            description: 'Could not load clubs data',
+            variant: 'destructive'
+          });
+        } else {
+          setClubs(clubsList);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
   }, [currentUserRole, getAllUsers, navigate]);
 
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchQuery.toLowerCase())
+    user.role?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleCreateUser = async (userData: { name: string; email: string; password: string; role: UserRole; clubId?: string }) => {
@@ -222,13 +260,14 @@ const StaffManagement: React.FC = () => {
         userData.clubId
       );
       
-      // Aggiorna la lista degli utenti
-      setUsers(getAllUsers());
+      // Refresh the users list
+      const updatedUsers = await getAllUsers();
+      setUsers(updatedUsers);
     } catch (error) {
-      console.error('Errore durante la creazione dell\'utente:', error);
+      console.error('Error creating user:', error);
       toast({
-        title: 'Errore',
-        description: 'Si è verificato un errore durante la creazione dell\'utente',
+        title: 'Error',
+        description: 'An error occurred while creating the user',
         variant: 'destructive'
       });
     }
@@ -239,17 +278,30 @@ const StaffManagement: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const handleDeleteUser = (userId: string) => {
-    // In un'applicazione reale, invieremmo una richiesta al backend
-    // Per ora, simuliamo l'eliminazione dell'utente
-    const updatedUsers = users.filter(user => user.id !== userId);
-    setUsers(updatedUsers);
-    localStorage.setItem('clickevent_users', JSON.stringify(updatedUsers));
-    
-    toast({
-      title: 'Utente eliminato',
-      description: 'L\'utente è stato eliminato con successo',
-    });
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      // In a real app, this would delete from auth.users which cascades to profiles
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update local state
+      setUsers(users.filter(user => user.id !== userId));
+      
+      toast({
+        title: 'User deleted',
+        description: 'The user has been deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not delete user',
+        variant: 'destructive'
+      });
+    }
   };
   
   const getRoleBadgeColor = (role: UserRole) => {
@@ -266,9 +318,9 @@ const StaffManagement: React.FC = () => {
   };
 
   const getClubName = (clubId?: string) => {
-    if (!clubId) return 'Nessun club';
-    const club = mockClubs.find(c => c.id === clubId);
-    return club ? club.name : 'Club sconosciuto';
+    if (!clubId) return 'No club';
+    const club = clubs.find(c => c.id === clubId);
+    return club ? club.name : 'Unknown club';
   };
 
   if (currentUserRole !== 'superadmin') {
@@ -279,12 +331,12 @@ const StaffManagement: React.FC = () => {
     <div className="animate-in">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Gestione Staff</h1>
-          <p className="text-muted-foreground">Gestisci gli account degli utenti admin e staff.</p>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Staff Management</h1>
+          <p className="text-muted-foreground">Manage admin and staff user accounts.</p>
         </div>
         <Button onClick={() => { setEditingUser(undefined); setDialogOpen(true); }}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Crea Utente
+          Create User
         </Button>
       </header>
 
@@ -292,7 +344,7 @@ const StaffManagement: React.FC = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Cerca utenti..."
+            placeholder="Search users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -305,18 +357,23 @@ const StaffManagement: React.FC = () => {
         onOpenChange={setDialogOpen}
         onSave={handleCreateUser}
         editingUser={editingUser}
+        clubs={clubs}
       />
 
-      {filteredUsers.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center p-8">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      ) : filteredUsers.length > 0 ? (
         <div className="bg-background rounded-lg border shadow">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Ruolo</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Club</TableHead>
-                <TableHead className="text-right">Azioni</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -339,7 +396,7 @@ const StaffManagement: React.FC = () => {
                         disabled={user.role === 'superadmin'}
                       >
                         <Edit className="h-4 w-4" />
-                        <span className="sr-only">Modifica</span>
+                        <span className="sr-only">Edit</span>
                       </Button>
                       <Button 
                         variant="ghost" 
@@ -348,7 +405,7 @@ const StaffManagement: React.FC = () => {
                         disabled={user.role === 'superadmin'}
                       >
                         <Trash className="h-4 w-4" />
-                        <span className="sr-only">Elimina</span>
+                        <span className="sr-only">Delete</span>
                       </Button>
                     </div>
                   </TableCell>
@@ -360,18 +417,18 @@ const StaffManagement: React.FC = () => {
       ) : (
         <div className="text-center py-10">
           <UserCog className="h-10 w-10 text-muted-foreground/60 mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-1">Nessun utente trovato</h3>
+          <h3 className="text-lg font-medium mb-1">No users found</h3>
           <p className="text-muted-foreground mb-4">
-            {searchQuery ? 'Nessun utente corrisponde ai criteri di ricerca.' : 'Non ci sono utenti creati.'}
+            {searchQuery ? 'No users match your search criteria.' : 'There are no users created yet.'}
           </p>
           {searchQuery ? (
             <Button variant="outline" onClick={() => setSearchQuery('')}>
-              Cancella ricerca
+              Clear search
             </Button>
           ) : (
             <Button onClick={() => { setEditingUser(undefined); setDialogOpen(true); }}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Crea il primo utente
+              Create first user
             </Button>
           )}
         </div>

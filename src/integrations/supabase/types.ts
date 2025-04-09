@@ -68,6 +68,130 @@ export type Database = {
           },
         ]
       }
+      clubs: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      event_form_fields: {
+        Row: {
+          created_at: string
+          event_id: string
+          field_label: string
+          field_name: string
+          field_type: string
+          id: string
+          is_required: boolean
+          options: Json | null
+          order_index: number
+          placeholder: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          field_label: string
+          field_name: string
+          field_type: string
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          order_index: number
+          placeholder?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          field_label?: string
+          field_name?: string
+          field_type?: string
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          order_index?: number
+          placeholder?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_form_fields_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_vouchers: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          quantity: number
+          remaining: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          quantity: number
+          remaining: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          quantity?: number
+          remaining?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_vouchers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           club_id: string | null
@@ -122,12 +246,155 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          club_id: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          club_id?: string | null
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          club_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchased_vouchers: {
+        Row: {
+          attendee_id: string
+          created_at: string
+          event_id: string
+          id: string
+          is_redeemed: boolean
+          package_id: string
+          package_name: string
+          price: number
+          purchase_date: string
+          qr_code: string
+          redemption_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          attendee_id: string
+          created_at?: string
+          event_id: string
+          id?: string
+          is_redeemed?: boolean
+          package_id: string
+          package_name: string
+          price: number
+          purchase_date?: string
+          qr_code: string
+          redemption_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attendee_id?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          is_redeemed?: boolean
+          package_id?: string
+          package_name?: string
+          price?: number
+          purchase_date?: string
+          qr_code?: string
+          redemption_time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchased_vouchers_attendee_id_fkey"
+            columns: ["attendee_id"]
+            isOneToOne: false
+            referencedRelation: "attendees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchased_vouchers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchased_vouchers_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "event_vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_assignments: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_assignments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
