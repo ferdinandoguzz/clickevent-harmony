@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (newSession) {
           // Fetch user profile from our profiles table
           try {
-            const { data: profile, error } = await supabase
+            const { data, error } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', newSession.user.id)
@@ -75,13 +75,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               return;
             }
             
-            if (profile) {
+            if (data) {
               setUser({
-                id: profile.id,
-                name: profile.name,
-                email: profile.email,
-                role: profile.role as UserRole,
-                clubId: profile.club_id
+                id: data.id,
+                name: data.name,
+                email: data.email,
+                role: data.role as UserRole,
+                clubId: data.club_id
               });
             }
           } catch (error) {
@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (existingSession) {
         // Fetch user profile from our profiles table
         try {
-          const { data: profile, error } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', existingSession.user.id)
@@ -113,13 +113,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             return;
           }
           
-          if (profile) {
+          if (data) {
             setUser({
-              id: profile.id,
-              name: profile.name,
-              email: profile.email,
-              role: profile.role as UserRole,
-              clubId: profile.club_id
+              id: data.id,
+              name: data.name,
+              email: data.email,
+              role: data.role as UserRole,
+              clubId: data.club_id
             });
           }
         } catch (error) {
@@ -233,7 +233,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getAllUsers = async (): Promise<User[]> => {
     try {
-      const { data: profiles, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('name');
@@ -244,7 +244,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       // Map profiles to users format
-      return profiles.map((profile: Profile) => ({
+      return data.map((profile: Profile) => ({
         id: profile.id,
         name: profile.name,
         email: profile.email,

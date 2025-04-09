@@ -5,8 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const getVoucherByQrCode = async (qrCode: string): Promise<PurchasedVoucher | undefined> => {
   try {
-    const { data, error } = await supabase
-      .from('purchased_vouchers')
+    // Use 'from' method instead of supabase directly to access any table
+    const { data, error } = await supabase.from('purchased_vouchers')
       .select(`
         id,
         event_id,
@@ -27,7 +27,19 @@ export const getVoucherByQrCode = async (qrCode: string): Promise<PurchasedVouch
       return undefined;
     }
     
-    return data as PurchasedVoucher;
+    // Transform database data to match PurchasedVoucher interface
+    return {
+      id: data.id,
+      eventId: data.event_id,
+      attendeeId: data.attendee_id,
+      packageId: data.package_id,
+      packageName: data.package_name,
+      purchaseDate: data.purchase_date,
+      price: data.price,
+      isRedeemed: data.is_redeemed,
+      redemptionTime: data.redemption_time,
+      qrCode: data.qr_code
+    } as PurchasedVoucher;
   } catch (error) {
     console.error('Error in getVoucherByQrCode:', error);
     return undefined;
@@ -57,7 +69,19 @@ export const getVouchersByEventId = async (eventId: string): Promise<PurchasedVo
       return [];
     }
     
-    return data as PurchasedVoucher[];
+    // Transform database data to match PurchasedVoucher interface
+    return data.map(item => ({
+      id: item.id,
+      eventId: item.event_id,
+      attendeeId: item.attendee_id,
+      packageId: item.package_id,
+      packageName: item.package_name,
+      purchaseDate: item.purchase_date,
+      price: item.price,
+      isRedeemed: item.is_redeemed,
+      redemptionTime: item.redemption_time,
+      qrCode: item.qr_code
+    })) as PurchasedVoucher[];
   } catch (error) {
     console.error('Error in getVouchersByEventId:', error);
     return [];
@@ -97,7 +121,19 @@ export const redeemVoucher = async (voucherId: string): Promise<PurchasedVoucher
       throw new Error('Failed to redeem voucher');
     }
     
-    return updatedVoucher as PurchasedVoucher;
+    // Transform database data to match PurchasedVoucher interface
+    return {
+      id: updatedVoucher.id,
+      eventId: updatedVoucher.event_id,
+      attendeeId: updatedVoucher.attendee_id,
+      packageId: updatedVoucher.package_id,
+      packageName: updatedVoucher.package_name,
+      purchaseDate: updatedVoucher.purchase_date,
+      price: updatedVoucher.price,
+      isRedeemed: updatedVoucher.is_redeemed,
+      redemptionTime: updatedVoucher.redemption_time,
+      qrCode: updatedVoucher.qr_code
+    } as PurchasedVoucher;
   } catch (error) {
     console.error('Error redeeming voucher:', error);
     throw error;
@@ -131,8 +167,8 @@ export const getVoucherWithAttendeeInfo = async (voucherId: string) => {
       packageName: data.package_name,
       isRedeemed: data.is_redeemed,
       redemptionTime: data.redemption_time,
-      attendeeName: data.attendees.name,
-      attendeeEmail: data.attendees.email
+      attendeeName: data.attendees?.name,
+      attendeeEmail: data.attendees?.email
     };
   } catch (error) {
     console.error('Error in getVoucherWithAttendeeInfo:', error);

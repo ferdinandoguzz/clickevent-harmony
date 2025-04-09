@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Search, Trash, Edit, UserCog, ShieldAlert } from 'lucide-react';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
@@ -65,7 +64,7 @@ const StaffDialog: React.FC<StaffDialogProps> = ({ open, onOpenChange, onSave, e
     if (editingUser) {
       setName(editingUser.name);
       setEmail(editingUser.email);
-      setPassword(''); // We can't retrieve the password, so empty field
+      setPassword('');
       setRole(editingUser.role);
       setClubId(editingUser.clubId || '');
     } else {
@@ -204,25 +203,20 @@ const StaffManagement: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is superadmin
     if (currentUserRole !== 'superadmin') {
       navigate('/unauthorized');
       return;
     }
     
-    // Load users and clubs
     const loadData = async () => {
       setIsLoading(true);
       try {
-        // Load users
         const usersList = await getAllUsers();
         setUsers(usersList);
         
-        // Load clubs
         const { data: clubsList, error } = await supabase
           .from('clubs')
-          .select('id, name')
-          .order('name');
+          .select('id, name');
           
         if (error) {
           console.error('Error loading clubs:', error);
@@ -260,7 +254,6 @@ const StaffManagement: React.FC = () => {
         userData.clubId
       );
       
-      // Refresh the users list
       const updatedUsers = await getAllUsers();
       setUsers(updatedUsers);
     } catch (error) {
@@ -280,14 +273,12 @@ const StaffManagement: React.FC = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      // In a real app, this would delete from auth.users which cascades to profiles
       const { error } = await supabase.auth.admin.deleteUser(userId);
       
       if (error) {
         throw error;
       }
       
-      // Update local state
       setUsers(users.filter(user => user.id !== userId));
       
       toast({
@@ -324,7 +315,7 @@ const StaffManagement: React.FC = () => {
   };
 
   if (currentUserRole !== 'superadmin') {
-    return null; // Redirect handled in useEffect
+    return null;
   }
 
   return (
