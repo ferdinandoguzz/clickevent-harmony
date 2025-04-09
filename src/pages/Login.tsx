@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Loader2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login: React.FC = () => {
   // Login state
@@ -26,10 +27,29 @@ const Login: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      // Use the existing login function to maintain app state management
       await login(email, password);
+      
+      toast({
+        title: "Successfully logged in",
+        description: `Welcome back!`
+      });
+      
       navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
+      toast({
+        title: "Authentication failed",
+        description: error instanceof Error ? error.message : 'An error occurred during login',
+        variant: 'destructive'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -38,16 +58,37 @@ const Login: React.FC = () => {
   const handleDemoLogin = async (role: string) => {
     setIsSubmitting(true);
     try {
+      let demoEmail = '';
+      
       if (role === 'superadmin') {
-        await login('superadmin@clickevent.com', 'password');
+        demoEmail = 'superadmin@clickevent.com';
       } else if (role === 'admin') {
-        await login('admin@clickevent.com', 'password');
+        demoEmail = 'admin@clickevent.com';
       } else if (role === 'staff') {
-        await login('staff@clickevent.com', 'password');
+        demoEmail = 'staff@clickevent.com';
       }
+      
+      // For demo purposes, we'll use a standard password
+      const demoPassword = 'password';
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: demoEmail,
+        password: demoPassword
+      });
+      
+      if (error) throw error;
+      
+      // Use the existing login function to maintain app state management
+      await login(demoEmail, demoPassword);
+      
       navigate(from, { replace: true });
     } catch (error) {
       console.error('Demo login error:', error);
+      toast({
+        title: "Demo login failed",
+        description: "Could not log in with demo account. Please try again or contact support.",
+        variant: 'destructive'
+      });
     } finally {
       setIsSubmitting(false);
     }

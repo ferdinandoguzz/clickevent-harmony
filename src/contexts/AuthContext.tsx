@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 export type UserRole = 'superadmin' | 'admin' | 'staff' | null;
 
@@ -9,7 +11,7 @@ interface User {
   name: string;
   email: string;
   role: UserRole;
-  clubId?: string; // Club associato all'utente staff
+  clubId?: string; // Club associated with staff user
 }
 
 interface AuthContextType {
@@ -39,22 +41,80 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    // Check for saved auth in localStorage
-    const savedUser = localStorage.getItem('clickevent_user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error('Error parsing saved user data', e);
-        localStorage.removeItem('clickevent_user');
+    // Set up auth state listener FIRST to prevent missing auth events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        console.log('Auth state changed:', event, newSession);
+        setSession(newSession);
+        
+        if (newSession) {
+          // Fetch user metadata from profiles or roles table
+          // For now we'll use mock data for demo accounts
+          const email = newSession.user.email;
+          if (email) {
+            let role: UserRole = 'staff';
+            let name = email.split('@')[0];
+            
+            if (email.includes('superadmin')) {
+              role = 'superadmin';
+            } else if (email.includes('admin')) {
+              role = 'admin';
+            }
+            
+            const userObj: User = {
+              id: newSession.user.id,
+              name,
+              email,
+              role
+            };
+            
+            setUser(userObj);
+          }
+        } else {
+          setUser(null);
+        }
       }
-    }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      console.log('Existing session:', existingSession);
+      setSession(existingSession);
+      
+      if (existingSession) {
+        // Fetch user metadata from profiles or roles table
+        // For now we'll use mock data for demo accounts
+        const email = existingSession.user.email;
+        if (email) {
+          let role: UserRole = 'staff';
+          let name = email.split('@')[0];
+          
+          if (email.includes('superadmin')) {
+            role = 'superadmin';
+          } else if (email.includes('admin')) {
+            role = 'admin';
+          }
+          
+          const userObj: User = {
+            id: existingSession.user.id,
+            name,
+            email,
+            role
+          };
+          
+          setUser(userObj);
+        }
+      }
+      
+      setIsLoading(false);
+    });
     
-    // Carica gli utenti salvati
+    // Load mock users (in a real app, these would come from the database)
     const savedUsers = localStorage.getItem('clickevent_users');
     if (savedUsers) {
       try {
@@ -64,7 +124,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.removeItem('clickevent_users');
       }
     } else {
-      // Inizializza con alcuni utenti di default se non ce ne sono
+      // Initialize with some default users if none exist
       const defaultUsers = [
         {
           id: 'superadmin-1',
@@ -88,56 +148,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUsers(defaultUsers);
       localStorage.setItem('clickevent_users', JSON.stringify(defaultUsers));
     }
-    
-    setIsLoading(false);
+
+    // Clean up subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Verifica se l'utente esiste nella lista degli utenti
-      const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (foundUser && password) {
-        setUser(foundUser);
-        localStorage.setItem('clickevent_user', JSON.stringify(foundUser));
-        toast({
-          title: 'Successfully logged in',
-          description: `Welcome back, ${foundUser.name}!`
-        });
-      } else {
-        // Fallback al comportamento precedente per demo
-        if (email && password) {
-          // Simulate role based on email for demo purposes
-          let role: UserRole = null;
-          
-          if (email.includes('superadmin')) {
-            role = 'superadmin';
-          } else if (email.includes('admin')) {
-            role = 'admin';
-          } else if (email.includes('staff')) {
-            role = 'staff';
-          } else {
-            throw new Error('Invalid user role');
-          }
-          
-          const newUser: User = {
-            id: `user-${Date.now()}`,
-            name: email.split('@')[0],
-            email,
-            role
-          };
-          
-          setUser(newUser);
-          localStorage.setItem('clickevent_user', JSON.stringify(newUser));
-          toast({
-            title: 'Successfully logged in',
-            description: `Welcome back, ${newUser.name}!`
-          });
-        } else {
-          throw new Error('Invalid credentials');
-        }
-      }
+      if (error) throw error;
+      
+      // Note: We rely on onAuthStateChange to update the user state
+      toast({
+        title: 'Successfully logged in',
+        description: `Welcome back!`
+      });
     } catch (error) {
       toast({
         title: 'Authentication failed',
@@ -150,9 +182,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      console.error('Error logging out:', error);
+      toast({
+        title: 'Error logging out',
+        description: error.message,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     setUser(null);
-    localStorage.removeItem('clickevent_user');
+    setSession(null);
+    
     toast({
       title: 'Logged out',
       description: 'You have been successfully logged out',
@@ -160,26 +205,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const createUser = async (name: string, email: string, password: string, role: UserRole, clubId?: string): Promise<User> => {
-    // In un'applicazione reale, qui invieremmo una richiesta al backend
-    // Per ora, simuliamo la creazione dell'utente
+    // In a real app, we would create the user in Supabase Auth
+    // For now, simulate user creation
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        name,
+        role,
+        clubId
+      }
+    });
+    
+    if (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: 'Error creating user',
+        description: error.message,
+        variant: 'destructive'
+      });
+      throw error;
+    }
+    
+    // Create a user object and add it to our local users array
     const newUser: User = {
-      id: `user-${Date.now()}`,
+      id: data.user.id,
       name,
       email,
       role,
       clubId
     };
     
-    // Aggiungi l'utente alla lista
     const updatedUsers = [...users, newUser];
     setUsers(updatedUsers);
     
-    // Salva nel localStorage
+    // Save in localStorage for demo purposes
     localStorage.setItem('clickevent_users', JSON.stringify(updatedUsers));
     
     toast({
-      title: 'Utente creato',
-      description: `${name} è stato aggiunto con successo come ${role}`,
+      title: 'User created',
+      description: `${name} has been added successfully as ${role}`,
     });
     
     return newUser;
