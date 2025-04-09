@@ -5,8 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const getVoucherByQrCode = async (qrCode: string): Promise<PurchasedVoucher | undefined> => {
   try {
-    // Use 'from' method instead of supabase directly to access any table
-    const { data, error } = await supabase.from('purchased_vouchers')
+    // Use 'from' method to access the purchased_vouchers table
+    const { data, error } = await supabase
+      .from('purchased_vouchers')
       .select(`
         id,
         event_id,

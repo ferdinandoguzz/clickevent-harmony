@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Search, Trash, Edit, UserCog, ShieldAlert } from 'lucide-react';
+import { PlusCircle, Search, Trash, Edit, UserCog } from 'lucide-react';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -14,11 +14,12 @@ interface User {
   clubId?: string; // Club associated with staff user
 }
 
-interface Profile {
+// Interface representing the database profile structure
+interface DBProfile {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: string; // Note: This is a string in the database
   club_id?: string;
   created_at: string;
   updated_at: string;
@@ -34,6 +35,23 @@ interface AuthContextType {
   createUser: (name: string, email: string, password: string, role: UserRole, clubId?: string) => Promise<User>;
   getAllUsers: () => Promise<User[]>;
 }
+
+// Helper function to convert the database role (string) to UserRole type
+const mapDbRoleToUserRole = (dbRole: string): UserRole => {
+  if (dbRole === 'superadmin' || dbRole === 'admin' || dbRole === 'staff') {
+    return dbRole;
+  }
+  return null;
+};
+
+// Transform database profile to app user model
+const mapDbProfileToUser = (profile: DBProfile): User => ({
+  id: profile.id,
+  name: profile.name,
+  email: profile.email,
+  role: mapDbRoleToUserRole(profile.role),
+  clubId: profile.club_id
+});
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -76,13 +94,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
             
             if (data) {
-              setUser({
-                id: data.id,
-                name: data.name,
-                email: data.email,
-                role: data.role as UserRole,
-                clubId: data.club_id
-              });
+              const dbProfile = data as DBProfile;
+              setUser(mapDbProfileToUser(dbProfile));
             }
           } catch (error) {
             console.error('Error processing profile:', error);
@@ -114,13 +127,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
           
           if (data) {
-            setUser({
-              id: data.id,
-              name: data.name,
-              email: data.email,
-              role: data.role as UserRole,
-              clubId: data.club_id
-            });
+            const dbProfile = data as DBProfile;
+            setUser(mapDbProfileToUser(dbProfile));
           }
         } catch (error) {
           console.error('Error processing profile:', error);
@@ -243,14 +251,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw error;
       }
       
-      // Map profiles to users format
-      return data.map((profile: Profile) => ({
-        id: profile.id,
-        name: profile.name,
-        email: profile.email,
-        role: profile.role,
-        clubId: profile.club_id
-      }));
+      // Map profiles to users format with proper type conversion
+      return (data as DBProfile[]).map(mapDbProfileToUser);
     } catch (error) {
       console.error('Error in getAllUsers:', error);
       return [];
